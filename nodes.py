@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field
 from state import AgentState
 from tools.tools import ALL_TOOLS
 
+from utils.retriever import get_warm_start_context
+
 load_dotenv()
 
 llm = ChatAnthropic(        # Initialize the LLM and bind tools to it
@@ -60,7 +62,6 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     # Extract the user's intent from the state
     user_intent = state.get("user_intent", "")
     
-    # Invoke the chain
     parsed_result = chain.invoke({"intent": user_intent})
     
     # Return the dictionary representation to update the state
@@ -68,3 +69,114 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
             "original_parsed_intent": parsed_result.model_dump(),
             "active_parsed_intent": parsed_result.model_dump()
         }
+
+
+### Weight Proposer Node
+
+class ProposedWeights(BaseModel):
+    best_historical_w1: float = Field(description="The EXACT w1 value from the single best historical run provided in the context.")
+    best_historical_w2: float = Field(description="The EXACT w2 value from the single best historical run provided in the context.")
+    best_historical_w3: float = Field(description="The EXACT w3 value from the single best historical run provided in the context.")
+    reasoning: str = Field(description="Explain why you are making micro-adjustments (max +/- 0.15) to the historical baseline to satisfy the intent.")
+    w1: float = Field(description="The adjusted Weight for Cost (between 0.0 and 1.0)")
+    w2: float = Field(description="The adjusted Weight for Security (between 0.0 and 1.0)")
+    w3: float = Field(description="The adjusted Weight for Latency (between 0.0 and 1.0)")
+
+try:
+    with open("prompts/proposer_system_prompt.md", "r") as f:
+            PROPOSER_SYSTEM_PROMPT = f.read()
+except FileNotFoundError:
+        PROPOSER_SYSTEM_PROMPT = "You are an expert Intent-Based Networking (IBN) agent. Your task is to propose a set of weights for a multi-objective service placement optimizer based on the parsed intent and historical successful runs. Ensure that the weights sum to 1.0 and provide reasoning for your selection."
+
+def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
+    parsed_intent = state["active_parsed_intent"]
+    
+    # Query the dataset containing historical successful runs to get a warm start context
+    historical_context = get_warm_start_context(parsed_intent)
+    
+    structured_llm = llm.with_structured_output(ProposedWeights)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", PROPOSER_SYSTEM_PROMPT),
+        ("user", "Parsed Intent:\n{intent}\n\nHistorical Context:\n{context}")
+    ])
+    
+    chain = prompt | structured_llm
+    result = chain.invoke({
+        "intent": str(parsed_intent),
+        "context": historical_context,
+    })
+
+    # Normalization of weights to ensure they sum to 1.0
+    total = result.w1 + result.w2 + result.w3
+    weights = {
+        "w1": round(result.w1 / total, 3) if total > 0 else 0.333,
+        "w2": round(result.w2 / total, 3) if total > 0 else 0.333,
+        "w3": round(result.w3 / total, 3) if total > 0 else 0.334,
+    }
+    
+    return {
+        "historical_context": historical_context,
+        "current_weights": weights,
+        "reasoning": result.reasoning
+    }
+
+
+### Verifier Node
+
+def verifier_node(state: AgentState) -> Dict[str, Any]:
+    """
+    Evaluates the simulation results against the user's hard constraints.
+    Returns deterministic feedback and a boolean success flag.
+    """
+    results = state.get("simulation_results", {})
+    intent = state.get("active_parsed_intent", {})
+    hard_constraints = intent.get("hard_constraints", [])
+    
+    metric_map = {
+        "latency": "norm_lat",
+        "cost": "norm_cost",
+        "security": "norm_sec"
+    }
+    
+    violations = []
+    
+    # Failures > 0 --> invalid run.
+    failures = results.get("failures", 0)
+    if failures > 0:
+        violations.append(f"CRITICAL FAILURE: The optimizer failed to place {failures} applications. The weights are likely causing capacity bottlenecks or violating minimum security tiers.")
+        
+    # Check the numeric hard constraints
+    for hc in hard_constraints:
+        metric_name = hc.get("metric", "").lower()
+        sim_key = metric_map.get(metric_name)
+        
+        if not sim_key or sim_key not in results:
+            continue
+            
+        sim_val = results[sim_key]
+        threshold = hc["threshold"]
+        op = hc["operator"]
+        
+        is_violated = False
+        if op in ["<=", "<"] and sim_val > threshold:
+            is_violated = True
+        elif op in [">=", ">"] and sim_val < threshold:
+            is_violated = True
+        elif op == "==" and sim_val != threshold:
+            is_violated = True
+            
+        if is_violated:
+            violations.append(f"Violated {metric_name}: Achieved {sim_val:.3f}, but required {op} {threshold}.")
+            
+    # Structured feedback for the next node
+    is_satisfied = len(violations) == 0
+    
+    if is_satisfied:
+        feedback = "SUCCESS: All hard constraints and placement requirements were strictly satisfied."
+    else:
+        feedback = "FAILED CONSTRAINTS:\n" + "\n".join(f"- {v}" for v in violations)
+        
+    return {
+        "constraints_satisfied": is_satisfied,
+        "verifier_feedback": feedback
+    }
