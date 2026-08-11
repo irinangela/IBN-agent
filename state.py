@@ -1,4 +1,4 @@
-from typing import TypedDict, Dict
+from typing import List, TypedDict, Dict, Any
 
 class AgentState(TypedDict):
     user_intent: str
@@ -10,6 +10,9 @@ class AgentState(TypedDict):
     simulation_results: Dict[str, Any]
     iteration_count: int
     max_iterations: int
-    final_response: str
+    
     constraints_satisfied: bool
     verifier_feedback: str
+    recalibration_history: List[str]    # List of past recalibration tries. 
+
+    final_response: str
