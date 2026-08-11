@@ -45,7 +45,6 @@ try:
 except FileNotFoundError:
         PARSER_SYSTEM_PROMPT = "You are an expert Intent-Based Networking (IBN) agent. Your task is to translate a network operator's natural language intent into a highly structured JSON format for a multi-objective service placement optimizer."
 
-
 def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     """Parses the natural language intent into a structured JSON dict."""
     
@@ -179,4 +178,82 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
     return {
         "constraints_satisfied": is_satisfied,
         "verifier_feedback": feedback
+    }
+
+
+#### Recalibration Node
+
+class RecalibrationOutput(BaseModel):
+    reasoning: str = Field(description="Analyze the Verifier's feedback. Explain exactly how you are adjusting the weights or why a relaxation is necessary.")
+    metric_to_relax: Optional[str] = Field(description="If constraints seem impossible to satisfy, output the exact metric name (e.g., 'cost', 'security') to drop based on the relaxation_order. Otherwise, return null/None.")
+    w1: float = Field(description="New adjusted weight for Cost (w1)")
+    w2: float = Field(description="New adjusted weight for Security (w2)")
+    w3: float = Field(description="New adjusted weight for Latency (w3)")
+
+try :
+    with open("prompts/recalibration_system_prompt.md", "r") as f:
+            RECALIBRATOR_SYSTEM_PROMPT = f.read()  
+except FileNotFoundError:
+        RECALIBRATOR_SYSTEM_PROMPT = "You are the Adaptive Search Engine for an Intent-Based Networking optimizer. Your task is to analyze the Verifier's feedback and propose new weights (w1, w2, w3) for the next optimization run. If the constraints seem impossible to satisfy, you may suggest relaxing one of the hard constraints based on the provided relaxation_order. Ensure that the weights sum to 1.0 and provide reasoning for your adjustments."  
+
+def recalibrator_node(state: AgentState) -> Dict[str, Any]:
+    """
+    Analyzes negative feedback and proposes new weights. 
+    Handles constraint relaxation if the problem is infeasible.
+    """
+    original_intent = state.get("original_parsed_intent", {})
+    parsed_intent = copy.deepcopy(state.get("active_parsed_intent", {}))
+    current_weights = state.get("current_weights", {})
+    feedback = state.get("verifier_feedback", "")
+    history = state.get("recalibration_history", [])
+
+    current_attempt_record = f"Attempted Weights: {current_weights} | Result: {feedback}"
+    updated_history = history + [current_attempt_record]
+
+    structured_llm = llm.with_structured_output(RecalibrationOutput)
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", RECALIBRATOR_SYSTEM_PROMPT),
+        ("user", "Original Intent:\n{original}\n\nActive Intent (Current Constraints):\n{active}\n\nPast Attempts History:\n{history}\n\nVerifier Feedback on Latest Attempt:\n{feedback}")
+    ])
+    
+    chain = prompt | structured_llm
+    
+    result = chain.invoke({
+        "original": json.dumps(original_intent, indent=2),
+        "active": json.dumps(parsed_intent, indent=2),
+        "history": json.dumps(updated_history, indent=2),
+        "feedback": feedback
+    })
+    
+    # Constraint Relaxation
+    relaxed_msg = ""
+    if result.metric_to_relax:
+        metric = result.metric_to_relax.lower()
+        original_count = len(parsed_intent.get("hard_constraints", []))
+        parsed_intent["hard_constraints"] = [
+            hc for hc in parsed_intent.get("hard_constraints", []) 
+            if hc.get("metric").lower() != metric
+        ]
+        
+        if len(parsed_intent["hard_constraints"]) < original_count:
+            relaxed_msg = f"\n[IMPORTANT]: Relaxed the '{metric}' constraint to find a feasible solution."
+            if metric in parsed_intent.get("relaxation_order", []):
+                parsed_intent["relaxation_order"].remove(metric)
+
+    total = result.w1 + result.w2 + result.w3
+    weights = {
+        "w1": round(result.w1 / total, 3) if total > 0 else 0.333,
+        "w2": round(result.w2 / total, 3) if total > 0 else 0.333,
+        "w3": round(result.w3 / total, 3) if total > 0 else 0.334,
+    }
+    
+    new_iteration_count = state.get("iteration_count", 0) + 1
+    
+    return {
+        "current_weights": weights,
+        "reasoning": result.reasoning + relaxed_msg,
+        "active_parsed_intent": parsed_intent, 
+        "iteration_count": new_iteration_count,
+        "recalibration_history": updated_history
     }
