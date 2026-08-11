@@ -6,6 +6,7 @@ import json
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import SystemMessage
 from pydantic import BaseModel, Field
 
 from state import AgentState
@@ -52,7 +53,7 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     structured_llm = llm.with_structured_output(IntentSchema)
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", PARSER_SYSTEM_PROMPT),
+        SystemMessage(content=PARSER_SYSTEM_PROMPT),
         ("user", "{intent}")
     ])
     
@@ -95,7 +96,7 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     
     structured_llm = llm.with_structured_output(ProposedWeights)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", PROPOSER_SYSTEM_PROMPT),
+        SystemMessage(content=PROPOSER_SYSTEM_PROMPT),
         ("user", "Parsed Intent:\n{intent}\n\nHistorical Context:\n{context}")
     ])
     
@@ -213,7 +214,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     structured_llm = llm.with_structured_output(RecalibrationOutput)
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", RECALIBRATOR_SYSTEM_PROMPT),
+        SystemMessage(content=RECALIBRATOR_SYSTEM_PROMPT),
         ("user", "Original Intent:\n{original}\n\nActive Intent (Current Constraints):\n{active}\n\nPast Attempts History:\n{history}\n\nVerifier Feedback on Latest Attempt:\n{feedback}")
     ])
     

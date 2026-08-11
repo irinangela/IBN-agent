@@ -1,69 +1,85 @@
-import streamlit as st
-import os
-import random
-import time
-from main import build_graph
+import json
+from typing import Literal
+from langgraph.graph import StateGraph, END
 
-st.set_page_config(page_title="")
-st.title("")
+from state import AgentState
 
-if "agent" not in st.session_state:
-    st.session_state.agent = build_graph()
-    st.session_state.config = {"configurable": {"thread_id": "streamlit_ui_002"}}
+from nodes import (
+    intent_parser_node, 
+    weight_proposer_node, 
+    verifier_node, 
+    recalibrator_node
+)
 
-if "messages" not in st.session_state:
-    initial_greeting = random.choice([
-        "Hello! I am your Assistant Agent. How can I help you today?",
-    ])
-    st.session_state.messages = [{"role": "assistant", "content": initial_greeting}]
+from tools.tools import run_optimization_simulator
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        if msg.get("type") == "image":
-            st.image(msg["content"]) 
-        else:
-            st.markdown(msg["content"])
+# Simulator: invokes the simulator tool with current weights and returns the results.
+def simulator_node(state: AgentState):
+    print("\n" + "="*50)
+    print(f"ITERATION {state.get('iteration_count', 0)}")
+    print("="*50)
+    
+    weights = state.get("current_weights", {})
+    
+    # Setting use_rollout=False for now so testing is fast. 
+    # Switch to True for higher-quality runs.
+    result_str = run_optimization_simulator.invoke({
+        "w1": weights.get("w1", 0.33),
+        "w2": weights.get("w2", 0.33),
+        "w3": weights.get("w3", 0.34),
+        "use_rollout": False 
+    })
+    
+    results_dict = json.loads(result_str)
+    
+    return {"simulation_results": results_dict}
 
-if user_query := st.chat_input(""):
-    st.session_state.messages.append({"role": "user", "type": "text", "content": user_query})
-    with st.chat_message("user"):
-        st.markdown(user_query)
 
-    with st.chat_message("assistant"):
-        with st.spinner("Analyzing data ..."):
-            final_response = ""
-            new_images = []
+# Conditional Routing Logic
+def route_verification(state: AgentState) -> Literal["end", "recalibrate"]:
+    """
+    Decides whether to finish the execution or loop back for recalibration.
+    """
+    # If the verifier passed all constraints, we are done!
+    if state.get("constraints_satisfied", False):
+        print("\n --> TARGET ACHIEVED! Exiting loop.")
+        return "end"
+    
+    # If we hit the maximum iteration limit, we must stop to prevent an infinite loop.
+    iteration_count = state.get("iteration_count", 0)
+    max_iterations = state.get("max_iterations", 5)
+    
+    if iteration_count >= max_iterations:
+        print(f"\n --> MAX ITERATIONS ({max_iterations}) REACHED. Forcing exit.")
+        return "end"
+    
+    # If constraints failed and we have iterations left: Loop back!
+    print("\n --> CONSTRAINTS FAILED. Routing to Recalibrator...")
+    return "recalibrate"
 
-            for event in st.session_state.agent.stream(
-                {"messages": [{"role": "user", "content": user_query}]}, 
-                st.session_state.config, 
-                stream_mode="values"
-            ):
-                last_message = event["messages"][-1]
-                
-                if last_message.type == "tool" and ".png" in str(last_message.content):
-                    for word in last_message.content.split():
-                        if ".png" in word:
-                            clean_filename = word.strip("'.")
-                            if clean_filename not in new_images:
-                                new_images.append(clean_filename)
 
-                if last_message.type == "ai" and last_message.content:
-                    final_response = last_message.content
-            
-        message_placeholder = st.empty()
-        typed_response = ""
-        
-        for chunk in final_response.split(' '):
-            typed_response += chunk + " "
-            time.sleep(0.02)
-            message_placeholder.markdown(typed_response + "▌")
-            
-        message_placeholder.markdown(final_response)
-        
-        st.session_state.messages.append({"role": "assistant", "type": "text", "content": final_response})
-        
-        for img_file in new_images:
-            if os.path.exists(img_file):
-                st.image(img_file)
-                st.session_state.messages.append({"role": "assistant", "type": "image", "content": img_file})
+workflow = StateGraph(AgentState)
+
+workflow.add_node("Parser", intent_parser_node)
+workflow.add_node("Proposer", weight_proposer_node)
+workflow.add_node("Simulator", simulator_node)
+workflow.add_node("Verifier", verifier_node)
+workflow.add_node("Recalibrator", recalibrator_node)
+
+workflow.set_entry_point("Parser")
+workflow.add_edge("Parser", "Proposer")
+workflow.add_edge("Proposer", "Simulator")
+workflow.add_edge("Simulator", "Verifier")
+
+workflow.add_conditional_edges(
+    "Verifier",
+    route_verification,
+    {
+        "end": END,
+        "recalibrate": "Recalibrator"
+    }
+)
+
+workflow.add_edge("Recalibrator", "Simulator")
+
+app = workflow.compile()
