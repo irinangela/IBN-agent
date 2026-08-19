@@ -1,8 +1,10 @@
+import time
 import streamlit as st
 import multiprocessing
 import json
 
 from app import app as agent_app
+from utils.analytics import save_run_analytics
 
 def main():
     st.set_page_config(page_title="Intent-Based Optimization Agent", layout="wide")
@@ -32,17 +34,23 @@ def main():
             "user_intent": user_intent,
             "iteration_count": 0,
             "max_iterations": max_iterations,
-            "recalibration_history": []
+            "recalibration_history": [],
+            "total_input_tokens": 0,
+            "total_output_tokens": 0
         }
 
+        current_state = initial_state.copy()
+
         st.markdown("### Agent Execution Log")
-        
         log_container = st.container()
+
+        start_time = time.time()
 
         with st.spinner("Agent is reasoning and simulating..."):
             for output in agent_app.stream(initial_state):
                 
                 for node_name, node_state in output.items():
+                    current_state.update(node_state)
                     with log_container.expander(f"⚙️ Node Executed: {node_name}", expanded=True):
                         
                         if node_name == "Parser":
@@ -76,7 +84,19 @@ def main():
                             st.write("**Updated Active Intent (Checking for relaxations):**")
                             st.json(node_state.get("active_parsed_intent"))
 
-        st.success("Optimization Loop Complete!")
+        end_time = time.time()
+        execution_time = end_time - start_time
+        
+        filepath = save_run_analytics(current_state, execution_time)
+
+        is_success = current_state.get("constraints_satisfied", False)
+        
+        if is_success:
+            st.success(f"Optimization Loop Complete! Target achieved. Analytics saved to `{filepath}`")
+        else:
+            st.error(f"Optimization loop stopped due to max iterations ({current_state.get('iteration_count')}). Target constraints were not met. Analytics saved to `{filepath}`")
+        
+        st.markdown(f"**Quick Stats:** Took **{execution_time:.2f}s**, used **{current_state.get('total_input_tokens', 0) + current_state.get('total_output_tokens', 0)} tokens**, over **{current_state.get('iteration_count', 0)} iterations**.")
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

@@ -16,3 +16,6 @@ class AgentState(TypedDict):
     recalibration_history: List[str]    # List of past recalibration tries. 
 
     final_response: str
+
+    total_input_tokens: int
+    total_output_tokens: int

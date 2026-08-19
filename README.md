@@ -49,7 +49,8 @@ graph TD
  ┣━  tools/
  ┃ ┗━  tools.py            # LangChain tool wrapping the simulator
  ┣━  utils/
- ┃ ┗━  retriever.py        # RAG functionality for querying historical runs
+ ┃ ┣━  retriever.py        # RAG functionality for querying historical runs
+ ┃ ┗━  analytics.py        # Analyses runs and gathers information for later evaluation
  ┣━  state.py              # LangGraph AgentState definition
  ┣━  nodes.py              # Core agent logic (Parser, Proposer, Verifier, Recalibrator)
  ┣━  app.py                # LangGraph orchestrator (Edges & Conditional Routing)
@@ -91,7 +92,7 @@ Constructs the `StateGraph`. Implements a conditional edge routing function (`ro
 
 ## Interactive UI (`main.py`)
 
-The project features a **Streamlit** frontend designed to visualize the internal reasoning (chain of thought) of the agent.
+The project features a **Streamlit** frontend designed to visualize the internal reasoning (chain of thought) of the agent. Once we run an optimization with an intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, etc), which is saved in a `results-analytics` directory ready to be used for further evaluation. 
 
 ### How to Run
 

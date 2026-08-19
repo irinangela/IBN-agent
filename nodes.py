@@ -50,8 +50,8 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     """Parses the natural language intent into a structured JSON dict."""
     
     # We use the base LLM for structured output via Pydantic
-    structured_llm = llm.with_structured_output(IntentSchema)
-    
+    structured_llm = llm.with_structured_output(IntentSchema, include_raw=True)
+
     prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content=PARSER_SYSTEM_PROMPT),
         ("user", "{intent}")
@@ -61,13 +61,22 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     
     # Extract the user's intent from the state
     user_intent = state.get("user_intent", "")
+
+    response = chain.invoke({"intent": user_intent})
     
-    parsed_result = chain.invoke({"intent": user_intent})
+    parsed_result = response["parsed"]
+    raw_msg = response["raw"]
+
+    usage = getattr(raw_msg, "usage_metadata", {}) or {}
+    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
+    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
     
     # Return the dictionary representation to update the state
     return {
             "original_parsed_intent": parsed_result.model_dump(),
-            "active_parsed_intent": parsed_result.model_dump()
+            "active_parsed_intent": parsed_result.model_dump(),
+            "total_input_tokens": in_tokens,
+            "total_output_tokens": out_tokens
         }
 
 
@@ -94,17 +103,24 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     # Query the dataset containing historical successful runs to get a warm start context
     historical_context = get_warm_start_context(parsed_intent)
     
-    structured_llm = llm.with_structured_output(ProposedWeights)
+    structured_llm = llm.with_structured_output(ProposedWeights, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content=PROPOSER_SYSTEM_PROMPT),
         ("user", "Parsed Intent:\n{intent}\n\nHistorical Context:\n{context}")
     ])
     
     chain = prompt | structured_llm
-    result = chain.invoke({
+    response = chain.invoke({
         "intent": str(parsed_intent),
         "context": historical_context,
     })
+
+    result = response["parsed"]
+    raw_msg = response["raw"]
+
+    usage = getattr(raw_msg, "usage_metadata", {}) or {}
+    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
+    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
 
     # Normalization of weights to ensure they sum to 1.0
     total = result.w1 + result.w2 + result.w3
@@ -117,7 +133,9 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     return {
         "historical_context": historical_context,
         "current_weights": weights,
-        "reasoning": result.reasoning
+        "reasoning": result.reasoning,
+        "total_input_tokens": in_tokens,
+        "total_output_tokens": out_tokens
     }
 
 
@@ -172,7 +190,7 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
     is_satisfied = len(violations) == 0
     
     if is_satisfied:
-        feedback = "SUCCESS: All hard constraints and placement requirements were strictly satisfied."
+        feedback = "SUCCESS: All active hard constraints and placement requirements were strictly satisfied."
     else:
         feedback = "FAILED CONSTRAINTS:\n" + "\n".join(f"- {v}" for v in violations)
         
@@ -211,7 +229,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     current_attempt_record = f"Attempted Weights: {current_weights} | Result: {feedback}"
     updated_history = history + [current_attempt_record]
 
-    structured_llm = llm.with_structured_output(RecalibrationOutput)
+    structured_llm = llm.with_structured_output(RecalibrationOutput, include_raw=True)
     
     prompt = ChatPromptTemplate.from_messages([
         SystemMessage(content=RECALIBRATOR_SYSTEM_PROMPT),
@@ -220,12 +238,19 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     
     chain = prompt | structured_llm
     
-    result = chain.invoke({
+    response = chain.invoke({
         "original": json.dumps(original_intent, indent=2),
         "active": json.dumps(parsed_intent, indent=2),
         "history": json.dumps(updated_history, indent=2),
         "feedback": feedback
     })
+
+    result = response["parsed"]
+    raw_msg = response["raw"]
+
+    usage = getattr(raw_msg, "usage_metadata", {}) or {}
+    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
+    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
     
     # Constraint Relaxation
     relaxed_msg = ""
@@ -256,5 +281,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
         "reasoning": result.reasoning + relaxed_msg,
         "active_parsed_intent": parsed_intent, 
         "iteration_count": new_iteration_count,
-        "recalibration_history": updated_history
+        "recalibration_history": updated_history,
+        "total_input_tokens": in_tokens,
+        "total_output_tokens": out_tokens
     }
