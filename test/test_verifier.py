@@ -1,95 +1,141 @@
-import json
 import sys
 import os
-from typing import Dict, Any
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from nodes import verifier_node
 
-def run_verifier_test(test_name: str, hard_constraints: list, simulation_results: dict):
-    print(f"\n{'='*70}")
-    print(f"-- RUNNING TEST: {test_name} --")
-    print(f"{'='*70}")
+def test_verifier_perfect_success():
+    """Valid mean operator-unit metrics pass the thresholds."""
     
     mock_intent = {
-        "primary_objective": "cost",
-        "hard_constraints": hard_constraints,
-        "soft_preferences": [],
-        "non_relaxable_constraints": [],
-        "relaxation_order": []
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 1000.0},
+            {"metric": "cost", "operator": "<=", "threshold": 600.0},
+        ]
     }
     
-    print("-- PARSED HARD CONSTRAINTS: --")
-    print(json.dumps(hard_constraints, indent=2))
+    mock_state = {
+        "active_parsed_intent": mock_intent, 
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 450.0,
+            "avg_security": 12.0,
+            "avg_latency": 900.0,
+        }
+    }
+
+    result = verifier_node(mock_state)  
+
+    assert result["constraints_satisfied"] is True
+    assert "SUCCESS" in result["verifier_feedback"]
+
     
-    print("\n-- SIMULATION RESULTS (From tools.py): --")
-    print(json.dumps(simulation_results, indent=2))
-    print("-" * 70)
+def test_verifier_sla_violation():
+    """A mean latency above the operator threshold fails the verifier."""
+
+    mock_intent = {
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 900.0}
+        ]
+    }
+    
+    mock_state = {
+        "active_parsed_intent": mock_intent, 
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 500.0,
+            "avg_security": 10.0,
+            "avg_latency": 1200.0,
+        }
+    }
+    
+    result = verifier_node(mock_state)
+    
+    assert result["constraints_satisfied"] is False
+    assert "Violated latency" in result["verifier_feedback"]
+
+
+def test_verifier_optimizer_failure():
+    """Physical placement failures immediately fail the verifier."""
+
+    mock_intent = {
+        "hard_constraints": [
+            {"metric": "cost", "operator": "<=", "threshold": 1000.0}
+        ]
+    }
+    
+    mock_state = {
+        "active_parsed_intent": mock_intent,
+        "simulation_results": {
+            "failures": 3,
+            "avg_cost": 400.0,
+            "avg_security": 10.0,
+            "avg_latency": 900.0,
+        }
+    }
+    
+    result = verifier_node(mock_state)
+    
+    assert result["constraints_satisfied"] is False
+    assert "CRITICAL FAILURE" in result["verifier_feedback"]
+
+
+def test_verifier_unrecognized_metric():
+    """Unknown metrics must surface as violations, not silent success."""
+
+    mock_intent = {
+        "hard_constraints": [
+            {"metric": "energy", "operator": "<=", "threshold": 10.0}
+        ]
+    }
 
     mock_state = {
-        "user_intent": "Mock natural language intent...",
-        "parsed_intent": mock_intent,
-        "historical_context": "",
-        "current_weights": {"w1": 0.5, "w2": 0.2, "w3": 0.3},
-        "reasoning": "Mock reasoning",
-        "simulation_results": simulation_results,
-        "iteration_count": 1,
-        "max_iterations": 5,
-        "final_response": "",
-        "constraints_satisfied": False,
-        "verifier_feedback": ""
+        "active_parsed_intent": mock_intent,
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 400.0,
+            "avg_security": 10.0,
+            "avg_latency": 900.0,
+        }
     }
-    
-    try:
-        result_state = verifier_node(mock_state)
-        
-        print("-- VERIFIER OUTPUT: --")
-        print(f"Constraints Satisfied: {result_state.get('constraints_satisfied')}")
-        print(f"Feedback Message:\n{result_state.get('verifier_feedback')}")
-        
-    except Exception as e:
-        import traceback
-        print(f"!!! Error during verification !!!")
-        print(traceback.format_exc())
 
-if __name__ == "__main__":
-    # TEST CASE 1: Perfect Success
-    constraints_1 = [
-        {"metric": "latency", "operator": "<=", "threshold": 50.0},
-        {"metric": "cost", "operator": "<=", "threshold": 5.0}
-    ]
-    results_1 = {
-        "failures": 0,
-        "norm_cost": 3.2,
-        "norm_sec": 15.0,
-        "norm_lat": 42.5,
-        "total_score": 10.5
-    }
-    run_verifier_test("Test Case 1 (Perfect Run)", constraints_1, results_1)
+    result = verifier_node(mock_state)
 
-    # TEST CASE 2: Violated Numeric Constraint --> Latency is too high compared to the threshold.
-    constraints_2 = [
-        {"metric": "latency", "operator": "<=", "threshold": 40.0}
-    ]
-    results_2 = {
-        "failures": 0,
-        "norm_cost": 1.1,
-        "norm_sec": 20.0,
-        "norm_lat": 85.3, # Violates the 40.0 threshold
-        "total_score": 12.0
-    }
-    run_verifier_test("Test Case 2 (SLA Violation)", constraints_2, results_2)
+    assert result["constraints_satisfied"] is False
+    assert "UNRECOGNIZED METRIC" in result["verifier_feedback"]
 
-    # TEST CASE 3: Optimizer Failure --> Even if metrics look okay, 'failures > 0' must trigger a failure.
-    constraints_3 = [
-        {"metric": "cost", "operator": "<=", "threshold": 10.0}
-    ]
-    results_3 = {
-        "failures": 3, # 3 applications could not be placed
-        "norm_cost": 2.5,
-        "norm_sec": 10.0,
-        "norm_lat": 30.0,
-        "total_score": float("inf")
+
+def test_verifier_security_minimum():
+    """Security uses >= (higher is better) against avg_security."""
+
+    mock_intent = {
+        "hard_constraints": [
+            {"metric": "security", "operator": ">=", "threshold": 8.0}
+        ]
     }
-    run_verifier_test("Test Case 3 (Optimizer Placement Failure)", constraints_3, results_3)
+
+    fail_state = {
+        "active_parsed_intent": mock_intent,
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 400.0,
+            "avg_security": 5.0,
+            "avg_latency": 900.0,
+        }
+    }
+    fail_result = verifier_node(fail_state)
+    assert fail_result["constraints_satisfied"] is False
+    assert "Violated security" in fail_result["verifier_feedback"]
+
+    pass_state = {
+        "active_parsed_intent": mock_intent,
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 400.0,
+            "avg_security": 12.0,
+            "avg_latency": 900.0,
+        }
+    }
+    pass_result = verifier_node(pass_state)
+    assert pass_result["constraints_satisfied"] is True
