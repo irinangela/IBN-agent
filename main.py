@@ -21,7 +21,7 @@ def main():
     # Input area
     user_intent = st.text_area(
         "Enter your network intent:",
-        value="Minimize latency. I need cost to be strictly under 3.0. If you can't hit the cost, relax security.",
+        value="Optimize for low latency. Average latency must stay under 1000ms. Cost and security are secondary.",
         height=100
     )
 
@@ -51,7 +51,7 @@ def main():
                 
                 for node_name, node_state in output.items():
                     current_state.update(node_state)
-                    with log_container.expander(f"⚙️ Node Executed: {node_name}", expanded=True):
+                    with log_container.expander(f"Node Executed: {node_name}", expanded=True):
                         
                         if node_name == "Parser":
                             st.write("**Original Parsed Intent:**")

@@ -13,7 +13,8 @@ def run_optimization_simulator(w1: float, w2: float, w3: float, use_rollout: boo
     """
     Runs the black-box heuristic optimizer to place microservices on the edge-cloud continuum.
     Pass the proposed mathematical weights: w1 (Cost), w2 (Security), and w3 (Latency).
-    Returns a JSON string containing the normalized metrics (norm_cost, norm_sec, norm_lat) and failures.
+    Returns a JSON string containing mean operator-unit metrics (avg_cost, avg_sec, avg_latency),
+    normalized aggregates (norm_*), totals, and failures.
     """
     global _CACHED_TOPO, _CACHED_APPS
     
@@ -46,9 +47,17 @@ def run_optimization_simulator(w1: float, w2: float, w3: float, use_rollout: boo
         result = run_best_fit(_CACHED_TOPO, _CACHED_APPS)
         
     summary = result["summary"]
+    n = max(int(summary.get("successful_apps", 0)), 1)
     
     output_dict = {
         "failures": summary["failures"],
+        "successful_apps": summary["successful_apps"],
+        "total_cost": round(summary["total_cost"], 3),
+        "total_security": round(summary["total_security"], 3),
+        "total_latency": round(summary["total_latency"], 3),
+        "avg_cost": round(summary["total_cost"] / n, 3),
+        "avg_security": round(summary["total_security"] / n, 3),
+        "avg_latency": round(summary["total_latency"] / n, 3),
         "norm_cost": round(summary["norm_cost"], 3),
         "norm_sec": round(summary["norm_sec"], 3),
         "norm_lat": round(summary["norm_lat"], 3),

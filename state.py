@@ -13,7 +13,7 @@ class AgentState(TypedDict):
     
     constraints_satisfied: bool
     verifier_feedback: str
-    recalibration_history: List[str]    # List of past recalibration tries. 
+    recalibration_history: List[Dict[str, Any]]  # Structured past attempts (weights + avg_* metrics). 
 
     final_response: str
 

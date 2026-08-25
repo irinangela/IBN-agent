@@ -146,7 +146,7 @@ class ThesisRolloutAllocatorV2(RolloutAllocatorV2):
         super().__init__(topo, max_branching=max_branching)
 
     def solve(self, apps: List):
-        with concurrent.futures.ProcessPoolExecutor(
+        with concurrent.futures.ThreadPoolExecutor(
             max_workers=cfg.MAX_WORKERS,
             initializer=init_rollout_worker,
             initargs=(self._w1, self._w2, self._w3),

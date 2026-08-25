@@ -21,13 +21,13 @@ def simulator_node(state: AgentState):
     
     weights = state.get("current_weights", {})
     
-    # Setting use_rollout=False for now so testing is fast. 
-    # Switch to True for higher-quality runs.
+    # best_fit for fast iteration,
+    # set use_rollout=True for higher-quality app_rollout runs.
     result_str = run_optimization_simulator.invoke({
         "w1": weights.get("w1", 0.33),
         "w2": weights.get("w2", 0.33),
         "w3": weights.get("w3", 0.34),
-        "use_rollout": False 
+        "use_rollout": False
     })
     
     results_dict = json.loads(result_str)
