@@ -10,20 +10,21 @@ The system is built using **LangGraph**, structuring the LLM operations in a ReA
 
 ```mermaid
 graph TD
-    A([User Input: Natural Language]) --> B[Intent Parser Node]
-    B --> C[Weight Proposer Node]
-    C --> D[Simulator Node]
-    D --> E[Verifier Node]
+    A([User Input in Natural Language]) --> B[Intent Parser]
+    B --> C[Weight Proposer]
+    C --> D[Simulator]
+    D --> E[Verifier ]
     E --> F{Constraints Satisfied?}
     F -- Yes (Target Achieved) --> G([END])
     F -- No (Thresholds Failed) --> H{Max Iterations?}
     H -- Yes --> G
-    H -- No --> I[Recalibrator Node]
+    H -- No --> I[Recalibrator]
     I --> D
 
 ```
 
 ---
+
 
 ## File Structure
 
@@ -45,6 +46,8 @@ graph TD
  ┃ ┣━  test_parser.py
  ┃ ┣━  test_proposer.py
  ┃ ┣━  test_recalibration.py
+ ┃ ┣━  test_retriever.py
+ ┃ ┣━  test_safety_guards.py
  ┃ ┗━  test_verifier.py
  ┣━  tools/
  ┃ ┗━  tools.py            # LangChain tool wrapping the simulator
@@ -52,7 +55,15 @@ graph TD
  ┃ ┣━  retriever.py        # RAG functionality for querying historical runs
  ┃ ┗━  analytics.py        # Analyses runs and gathers information for later evaluation
  ┣━  state.py              # LangGraph AgentState definition
- ┣━  nodes.py              # Core agent logic (Parser, Proposer, Verifier, Recalibrator)
+ ┣━  nodes/                # LangGraph Node implementations
+ ┃ ┣━ __init__.py          # Public API re-exports
+ ┃ ┣━ llm.py               # Shared ChatAnthropic client
+ ┃ ┣━ parser.py            # Natural Language to structured intent
+ ┃ ┣━ proposer.py          # Warm-start + micro-adjust weights
+ ┃ ┣━ recalibrator.py      # Search + code-enforced relaxation
+ ┃ ┣━ schemas.py           # MetricType, IntentSchema, unit labels
+ ┃ ┣━ verifier.py          # Deterministic SLA checks
+ ┃ ┗━ weights.py           # Clip + normalization
  ┣━  app.py                # LangGraph orchestrator (Edges & Conditional Routing)
  ┗━  main.py               # Streamlit Frontend
 
@@ -93,6 +104,12 @@ Constructs the `StateGraph`. Implements a conditional edge routing function (`ro
 ## Interactive UI (`main.py`)
 
 The project features a **Streamlit** frontend designed to visualize the internal reasoning (chain of thought) of the agent. Once we run an optimization with an intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, etc), which is saved in a `results-analytics` directory ready to be used for further evaluation. 
+
+## Automated Testing
+
+The repository includes a comprehensive pytest suite that is integrated into a GitHub Actions CI/CD pipeline to ensure metric verification, mathematical guarantees and LLM invoking are preserved on every commit.
+
+
 
 ### How to Run
 
