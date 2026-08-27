@@ -22,6 +22,11 @@ def save_run_analytics(final_state: dict, execution_time_seconds: float):
         "success": final_state.get("constraints_satisfied", False),
         "total_iterations": final_state.get("iteration_count", 0),
         "constraints_dropped": constraints_dropped,
+        "algorithm": (
+            "app_rollout" if final_state.get("use_rollout") else "best_fit"
+        ),
+        "feasibility_report": final_state.get("feasibility_report", {}),
+        "operator_decision": final_state.get("operator_decision", {}),
         "token_usage": {
             "input_tokens": final_state.get("total_input_tokens", 0),
             "output_tokens": final_state.get("total_output_tokens", 0),

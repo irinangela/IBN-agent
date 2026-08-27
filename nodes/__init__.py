@@ -1,14 +1,16 @@
 """Same as the old monolithic nodes.py
     contains these nodes:
-        intent_parser_node, 
-        weight_proposer_node, 
-        verifier_node, 
+        intent_parser_node,
+        weight_proposer_node,
+        feasibility_node,
+        verifier_node,
         recalibrator_node
     and helper functions.
 """
 
 from nodes.parser import intent_parser_node
 from nodes.proposer import weight_proposer_node
+from nodes.feasibility import feasibility_node, apply_operator_decision
 from nodes.verifier import verifier_node
 from nodes.recalibrator import (
     recalibrator_node,
@@ -35,6 +37,8 @@ from nodes.schemas import (
 __all__ = [
     "intent_parser_node",
     "weight_proposer_node",
+    "feasibility_node",
+    "apply_operator_decision",
     "verifier_node",
     "recalibrator_node",
     "apply_constraint_relaxation",

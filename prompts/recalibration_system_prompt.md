@@ -21,7 +21,7 @@ YOUR MISSION (in order):
      * If the last change made the violated metric WORSE, reverse that change.
      * If it made it BETTER but still failing, take a small step (±0.05 to 0.15)
        in the same empirical direction.
-   - Do not propose weights nearly identical to a past failed attempt.
+   - Do not propose weights that are identical or nearly identical to any past failed attempt!
 2. CONSTRAINT RELAXATION (only if search is stuck)
    Relaxation DROPS a hard_constraint. It does nothing to soft preferences.
    Set metric_to_relax ONLY when ALL of these are true:

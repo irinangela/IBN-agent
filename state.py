@@ -19,3 +19,8 @@ class AgentState(TypedDict):
 
     total_input_tokens: int
     total_output_tokens: int
+
+    use_rollout: bool
+    feasibility_report: Dict[str, Any]
+    needs_operator: bool
+    operator_decision: Dict[str, Any]

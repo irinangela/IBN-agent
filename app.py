@@ -5,81 +5,80 @@ from langgraph.graph import StateGraph, END
 from state import AgentState
 
 from nodes import (
-    intent_parser_node, 
-    weight_proposer_node, 
-    verifier_node, 
-    recalibrator_node
+    intent_parser_node,
+    feasibility_node,
+    weight_proposer_node,
+    verifier_node,
+    recalibrator_node,
 )
 
 from tools.tools import run_optimization_simulator
 
-# Simulator: invokes the simulator tool with current weights and returns the results.
+
 def simulator_node(state: AgentState):
     print("\n" + "="*50)
     print(f"ITERATION {state.get('iteration_count', 0)}")
     print("="*50)
-    
+
     weights = state.get("current_weights", {})
-    
-    # best_fit for fast iteration,
-    # set use_rollout=True for higher-quality app_rollout runs.
+
     result_str = run_optimization_simulator.invoke({
         "w1": weights.get("w1", 0.33),
         "w2": weights.get("w2", 0.33),
         "w3": weights.get("w3", 0.34),
-        "use_rollout": False
+        "use_rollout": bool(state.get("use_rollout", False)),
     })
-    
+
     results_dict = json.loads(result_str)
-    
+
     return {"simulation_results": results_dict}
 
 
-# Conditional Routing Logic
 def route_verification(state: AgentState) -> Literal["end", "recalibrate"]:
     """
     Decides whether to finish the execution or loop back for recalibration.
     """
-    # If the verifier passed all constraints, we are done!
     if state.get("constraints_satisfied", False):
         print("\n --> TARGET ACHIEVED! Exiting loop.")
         return "end"
-    
-    # If we hit the maximum iteration limit, we must stop to prevent an infinite loop.
+
     iteration_count = state.get("iteration_count", 0)
     max_iterations = state.get("max_iterations", 5)
-    
+
     if iteration_count >= max_iterations:
         print(f"\n --> MAX ITERATIONS ({max_iterations}) REACHED. Forcing exit.")
         return "end"
-    
-    # If constraints failed and we have iterations left: Loop back!
+
     print("\n --> CONSTRAINTS FAILED. Routing to Recalibrator...")
     return "recalibrate"
 
 
-workflow = StateGraph(AgentState)
+parse_workflow = StateGraph(AgentState)
+parse_workflow.add_node("Parser", intent_parser_node)
+parse_workflow.add_node("Feasibility", feasibility_node)
+parse_workflow.set_entry_point("Parser")
+parse_workflow.add_edge("Parser", "Feasibility")
+parse_workflow.add_edge("Feasibility", END)
+parse_app = parse_workflow.compile()
 
-workflow.add_node("Parser", intent_parser_node)
-workflow.add_node("Proposer", weight_proposer_node)
-workflow.add_node("Simulator", simulator_node)
-workflow.add_node("Verifier", verifier_node)
-workflow.add_node("Recalibrator", recalibrator_node)
-
-workflow.set_entry_point("Parser")
-workflow.add_edge("Parser", "Proposer")
-workflow.add_edge("Proposer", "Simulator")
-workflow.add_edge("Simulator", "Verifier")
-
-workflow.add_conditional_edges(
+search_workflow = StateGraph(AgentState)
+search_workflow.add_node("Proposer", weight_proposer_node)
+search_workflow.add_node("Simulator", simulator_node)
+search_workflow.add_node("Verifier", verifier_node)
+search_workflow.add_node("Recalibrator", recalibrator_node)
+search_workflow.set_entry_point("Proposer")
+search_workflow.add_edge("Proposer", "Simulator")
+search_workflow.add_edge("Simulator", "Verifier")
+search_workflow.add_conditional_edges(
     "Verifier",
     route_verification,
     {
         "end": END,
-        "recalibrate": "Recalibrator"
-    }
+        "recalibrate": "Recalibrator",
+    },
 )
+search_workflow.add_edge("Recalibrator", "Simulator")
+search_app = search_workflow.compile()
 
-workflow.add_edge("Recalibrator", "Simulator")
-
-app = workflow.compile()
+# Search loop only. Streamlit runs parse_app first so HITL can pause.
+app = search_app

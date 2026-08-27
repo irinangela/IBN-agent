@@ -14,7 +14,7 @@ Instructions for parsing:
 1. 'primary_objective': Identify the main metric the user wants to optimize (either maximize or minimize).
 2. 'hard_constraints': Extract any strict numerical limits provided (e.g., "latency under 1000ms" becomes metric: "latency", operator: "<=", threshold: 1000.0).
 3. 'soft_preferences': Extract desires that lack strict numerical values (e.g., "keep security reasonably high").
-4. 'non_relaxable_constraints': List of metric names ONLY from {'latency', 'cost', 'security'} that must never be compromised. Never use free-text sentences here.
+4. 'non_relaxable_constraints': List of metric names ONLY from {'latency', 'cost', 'security'} that must never be compromised. Never use free-text sentences here. Add metrics in this list only if user specifically mentions them as non-relaxable or if the sentence contains words-keys such as "always", "never", "in all cases". etc. 
 5. 'relaxation_order': Ordered list of metric names ONLY from {'latency', 'cost', 'security'} that may be sacrificed if constraints are infeasible.
 
 Example 1:
