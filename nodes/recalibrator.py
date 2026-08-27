@@ -12,18 +12,69 @@ from nodes.schemas import MetricType, METRIC_RESULT_KEYS, HIGHER_IS_BETTER
 from nodes.weights import clip_and_normalize_weights
 
 
+MIN_DISTINCT_FAILED_WEIGHTS = 3
+
+def _matching_constraint(intent: Dict[str, Any], metric: str) -> Optional[Dict[str, Any]]:
+    for hc in intent.get("hard_constraints") or []:
+        if (hc.get("metric") or "").lower() == metric:
+            return hc
+    return None
+
+
+def _is_strictly_looser(operator: str, old_threshold: float, new_threshold: float) -> bool:
+    if operator in ("<=", "<"):
+        return new_threshold > old_threshold
+    if operator in (">=", ">"):
+        return new_threshold < old_threshold
+    return False
+
+
+def _gap_message(metric: str, original_threshold: float, new_threshold: float) -> str:
+    if original_threshold == 0:
+        return (
+            f"{metric} constraint relaxed from {original_threshold} to {new_threshold}."
+        )
+    relative = (new_threshold - original_threshold) / abs(original_threshold) * 100.0
+    sign = "+" if relative >= 0 else "-"
+    return (
+        f"{metric} constraint relaxed from {original_threshold} to {new_threshold}, "
+        f"{sign}{relative:.0f}%."
+    )
+
+
 def apply_constraint_relaxation(
     parsed_intent: Dict[str, Any],
-    metric_to_relax: Optional[str],
+    relax_metric: Optional[str],
+    relaxed_threshold: Optional[float] = None,
+    original_intent: Optional[Dict[str, Any]] = None,
 ) -> tuple[Dict[str, Any], str]:
     """
-    Code-enforced relaxation: drop a hard constraint only if the metric is in
-    relaxation_order and not in non_relaxable_constraints.
+    Code-enforced relaxation: loosen a hard-constraint threshold. Never delete it.
+    Metric must be in relaxation_order and not in non_relaxable_constraints.
     """
-    if not metric_to_relax:
+    if not relax_metric:
+        if relaxed_threshold is not None:
+            return parsed_intent, (
+                "\n[SYSTEM OVERRIDE]: relaxed_threshold was set without relax_metric. "
+                "Both fields are required to loosen a constraint."
+            )
         return parsed_intent, ""
 
-    metric = metric_to_relax.lower()
+    metric = relax_metric.lower()
+    if relaxed_threshold is None:
+        return parsed_intent, (
+            f"\n[SYSTEM OVERRIDE]: LLM attempted to relax '{metric}' "
+            "but did not propose a relaxed_threshold. Constraint unchanged."
+        )
+
+    try:
+        new_threshold = float(relaxed_threshold)
+    except (TypeError, ValueError):
+        return parsed_intent, (
+            f"\n[SYSTEM OVERRIDE]: LLM attempted to relax '{metric}' "
+            "with a non-numeric relaxed_threshold. Constraint unchanged."
+        )
+
     non_relaxable = [m.lower() for m in parsed_intent.get("non_relaxable_constraints", [])]
     relaxation_order = [m.lower() for m in parsed_intent.get("relaxation_order", [])]
 
@@ -39,26 +90,60 @@ def apply_constraint_relaxation(
             f"but code enforcement blocked it because it is not in relaxation_order."
         )
 
-    original_count = len(parsed_intent.get("hard_constraints", []))
-    parsed_intent["hard_constraints"] = [
-        hc for hc in parsed_intent.get("hard_constraints", [])
-        if hc.get("metric").lower() != metric
-    ]
-
-    if len(parsed_intent["hard_constraints"]) < original_count:
-        parsed_intent["relaxation_order"] = [
-            m for m in parsed_intent.get("relaxation_order", [])
-            if m.lower() != metric
-        ]
+    constraint = _matching_constraint(parsed_intent, metric)
+    if constraint is None:
         return parsed_intent, (
-            f"\n[IMPORTANT]: Relaxed the '{metric}' constraint to find a feasible solution."
+            f"\n[SYSTEM OVERRIDE]: LLM attempted to relax '{metric}', "
+            f"but there is no hard constraint on '{metric}' to loosen. "
+            f"Only existing hard_constraints can be relaxed."
         )
 
+    try:
+        current_threshold = float(constraint["threshold"])
+    except (TypeError, ValueError, KeyError):
+        return parsed_intent, (
+            f"\n[SYSTEM OVERRIDE]: Active '{metric}' constraint has no numeric threshold."
+        )
+
+    operator = constraint.get("operator") or ""
+    if not _is_strictly_looser(operator, current_threshold, new_threshold):
+        return parsed_intent, (
+            f"\n[SYSTEM OVERRIDE]: LLM attempted to relax '{metric}' to {new_threshold}, "
+            f"which is not strictly looser than the active threshold {current_threshold} "
+            f"({operator}). Constraint unchanged."
+        )
+
+    original_hc = _matching_constraint(original_intent or {}, metric)
+    try:
+        original_threshold = (
+            float(original_hc["threshold"]) if original_hc is not None else current_threshold
+        )
+    except (TypeError, ValueError, KeyError):
+        original_threshold = current_threshold
+
+    constraint["threshold"] = new_threshold
     return parsed_intent, (
-        f"\n[SYSTEM OVERRIDE]: LLM attempted to relax '{metric}', "
-        f"but there is no hard constraint on '{metric}' to drop. "
-        f"Only existing hard_constraints can be relaxed."
+        f"\n[IMPORTANT]: {_gap_message(metric, original_threshold, new_threshold)}"
     )
+
+
+def distinct_failed_weight_count(history: list) -> int:
+    """Count unique failed (w1, w2, w3) vectors, rounded to 3 decimals."""
+
+    seen = set()
+    for rec in history or []:
+        if not isinstance(rec, dict):
+            continue
+        try:
+            key = (
+                round(float(rec.get("w1")), 3),
+                round(float(rec.get("w2")), 3),
+                round(float(rec.get("w3")), 3),
+            )
+        except (TypeError, ValueError):
+            continue
+        seen.add(key)
+    return len(seen)
 
 
 def violated_metrics_from_feedback(feedback: str) -> list[str]:
@@ -72,7 +157,7 @@ def violated_metrics_from_feedback(feedback: str) -> list[str]:
 
 
 def relaxable_hard_metrics(intent: Dict[str, Any]) -> list[str]:
-    """Hard-constraint metrics that code is allowed to drop."""
+    """Hard-constraint metrics that code is allowed to loosen."""
     non_relaxable = {m.lower() for m in intent.get("non_relaxable_constraints", [])}
     relaxation_order = {m.lower() for m in intent.get("relaxation_order", [])}
     eligible = []
@@ -249,13 +334,15 @@ def format_relaxation_eligibility(intent: Dict[str, Any]) -> str:
     eligible = relaxable_hard_metrics(intent)
     if eligible:
         return (
-            "These hard constraints may be dropped if search is stuck: "
+            "These hard constraints may be loosened (not dropped) if search is stuck "
+            f"and at least {MIN_DISTINCT_FAILED_WEIGHTS} distinct weight vectors have failed: "
             + ", ".join(eligible)
-            + ". Prefer the earliest entry in relaxation_order."
+            + ". Prefer the earliest entry in relaxation_order. "
+            "Propose relax_metric and a strictly looser relaxed_threshold."
         )
     return (
         "[SYSTEM]: No relaxable hard constraint remains. "
-        "Leave metric_to_relax null. Weight search only."
+        "Leave relax_metric and relaxed_threshold null. Weight search only."
     )
 
 
@@ -266,12 +353,19 @@ class RecalibrationOutput(BaseModel):
             "you are adjusting the weights or why a relaxation is necessary."
         ),
     )
-    metric_to_relax: Optional[MetricType] = Field(
+    relax_metric: Optional[MetricType] = Field(
         default=None,
         description=(
-            "Drop this hard_constraint if stuck and infeasible. Must currently exist "
-            "in active hard_constraints, be in relaxation_order, and not be "
-            "non_relaxable. Otherwise null. Do not name a soft-preference metric."
+            "Metric whose hard_constraint threshold may be loosened if stuck. "
+            "Must currently exist in active hard_constraints, and in relaxation_order, "
+            "but not in non_relaxable. Otherwise null. Do not name a soft-preference metric."
+        ),
+    )
+    relaxed_threshold: Optional[float] = Field(
+        default=None,
+        description=(
+            "New numeric threshold for relax_metric. Must be strictly looser than the "
+            "active threshold. Null when relax_metric is null."
         ),
     )
     w1: float = Field(description="New adjusted weight for Cost (w1)")
@@ -348,9 +442,23 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
     out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
 
-    parsed_intent, relaxed_msg = apply_constraint_relaxation(
-        parsed_intent, result.metric_to_relax
-    )
+    relax_metric = getattr(result, "relax_metric", None)
+    relaxed_threshold = getattr(result, "relaxed_threshold", None)
+    distinct_count = distinct_failed_weight_count(updated_history)
+
+    if relax_metric and distinct_count < MIN_DISTINCT_FAILED_WEIGHTS:
+        relaxed_msg = (
+            f"\n[SYSTEM OVERRIDE]: Relaxation of '{relax_metric}' refused: "
+            f"only {distinct_count} distinct failed weight vector(s); "
+            f"need ≥{MIN_DISTINCT_FAILED_WEIGHTS}."
+        )
+    else:
+        parsed_intent, relaxed_msg = apply_constraint_relaxation(
+            parsed_intent,
+            relax_metric,
+            relaxed_threshold,
+            original_intent=original_intent,
+        )
     if parsed_intent.get("hard_constraints") and not relaxable_hard_metrics(parsed_intent):
         relaxed_msg += (
             "\n[SYSTEM]: No relaxable hard constraint remains. Weight search only."

@@ -23,15 +23,21 @@ YOUR MISSION (in order):
        in the same empirical direction.
    - Do not propose weights that are identical or nearly identical to any past failed attempt!
 2. CONSTRAINT RELAXATION (only if search is stuck)
-   Relaxation DROPS a hard_constraint. It does nothing to soft preferences.
-   Set metric_to_relax ONLY when ALL of these are true:
+   Relaxation loosens a hard_constraint threshold. It does not drop the constraint
+   and it does nothing to soft preferences.
+   Set relax_metric AND relaxed_threshold ONLY when ALL of these are true:
    - the metric currently appears in Active Intent.hard_constraints
    - it is in relaxation_order
    - it is NOT in non_relaxable_constraints
-   - several attempts failed, or the gap looks infeasible from history
+   - at least 3 distinct failed weight vectors exist (code will refuse earlier)
+   - if after 4 attempts the current value and the threshold have a gap of over 70% 
+   Propose a strictly looser threshold, justified by best-so-far or historical
+   best-known plus a small margin (e.g. 5%). Cost/latency: raise it.
+   Security: lower it.
+   Leave both fields null unless search is stuck.
    Prefer the earliest eligible metric in relaxation_order.
-   If the only remaining hard constraint is non-relaxable, leave
-   metric_to_relax null and keep searching or state infeasibility.
+   If the only remaining hard constraint is non-relaxable, leave both fields
+   null and keep searching or state infeasibility.
    NEVER relax a metric that has no hard constraint (e.g. cost when
    the only SLA is latency) because that would be irrelevant.
 

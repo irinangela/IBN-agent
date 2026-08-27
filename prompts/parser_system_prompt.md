@@ -15,10 +15,10 @@ Instructions for parsing:
 2. 'hard_constraints': Extract any strict numerical limits provided (e.g., "latency under 1000ms" becomes metric: "latency", operator: "<=", threshold: 1000.0).
 3. 'soft_preferences': Extract desires that lack strict numerical values (e.g., "keep security reasonably high").
 4. 'non_relaxable_constraints': List of metric names ONLY from {'latency', 'cost', 'security'} that must never be compromised. Never use free-text sentences here. Add metrics in this list only if user specifically mentions them as non-relaxable or if the sentence contains words-keys such as "always", "never", "in all cases". etc. 
-5. 'relaxation_order': Ordered list of metric names ONLY from {'latency', 'cost', 'security'} that may be sacrificed if constraints are infeasible.
+5. 'relaxation_order': Ordered list of metric names ONLY from {'latency', 'cost', 'security'} that may be loosened if a hard constraint is infeasible. Include a metric ONLY if it already appears in hard_constraints. Soft preferences do not belong here. Code will drop any other entries.
 
 Example 1:
-User: "I need a placement that's mostly optimized for low latency, but I really can't have average latency go above 1000ms. Try to keep security reasonably high too, but cost doesn't matter much to me. If you can't hit the latency target, security is the first thing I'm willing to give up on."
+User: "I need a placement that's mostly optimized for low latency, but I really can't have average latency go above 1000ms. Try to keep security reasonably high too, but cost doesn't matter much to me. If the 1000ms latency SLA proves impossible, you may loosen that latency constraint."
 Output: {
   "primary_objective": "latency",
   "hard_constraints": [
@@ -34,8 +34,7 @@ Output: {
   ],
   "non_relaxable_constraints": [],
   "relaxation_order": [
-    "security",
-    "cost"
+    "latency"
   ]
 }
 
@@ -80,7 +79,5 @@ Output: {
     "latency",
     "security"
   ],
-  "relaxation_order": [
-    "cost"
-  ]
+  "relaxation_order": []
 }

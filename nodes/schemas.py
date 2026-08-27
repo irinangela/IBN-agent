@@ -49,5 +49,5 @@ class IntentSchema(BaseModel):
     )
     relaxation_order: list[MetricType] = Field(
         default_factory=list,
-        description="The order in which metric names can be sacrificed if a solution is infeasible.",
+        description="Hard-constraint metrics that may be loosened if a solution is infeasible. Must be a subset of hard_constraints.",
     )

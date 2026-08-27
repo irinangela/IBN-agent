@@ -8,13 +8,15 @@
     and helper functions.
 """
 
-from nodes.parser import intent_parser_node
+from nodes.parser import intent_parser_node, get_relaxation_order
 from nodes.proposer import weight_proposer_node
 from nodes.feasibility import feasibility_node, apply_operator_decision
 from nodes.verifier import verifier_node
 from nodes.recalibrator import (
     recalibrator_node,
     apply_constraint_relaxation,
+    distinct_failed_weight_count,
+    MIN_DISTINCT_FAILED_WEIGHTS,
     violated_metrics_from_feedback,
     relaxable_hard_metrics,
     build_attempt_record,
@@ -36,12 +38,15 @@ from nodes.schemas import (
 
 __all__ = [
     "intent_parser_node",
+    "get_relaxation_order",
     "weight_proposer_node",
     "feasibility_node",
     "apply_operator_decision",
     "verifier_node",
     "recalibrator_node",
     "apply_constraint_relaxation",
+    "distinct_failed_weight_count",
+    "MIN_DISTINCT_FAILED_WEIGHTS",
     "violated_metrics_from_feedback",
     "relaxable_hard_metrics",
     "build_attempt_record",

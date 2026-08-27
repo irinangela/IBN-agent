@@ -73,6 +73,19 @@ def test_relaxation_eligibility_when_only_sla_is_non_relaxable():
     }
     note = format_relaxation_eligibility(intent)
     assert "No relaxable hard constraint remains" in note
+    assert "relax_metric" in note
+
+
+def test_relaxation_loosening_not_dropping():
+    note = format_relaxation_eligibility({
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 900.0}
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": ["latency"],
+    })
+    assert "loosened" in note
+    assert "not dropped" in note
 
 
 def test_build_attempt_record_stores_operator_unit_metrics():
@@ -124,6 +137,7 @@ def test_recalibration_minor_violation():
     assert result["recalibration_history"][0]["avg_latency"] == 1200.0
 
     assert len(result["active_parsed_intent"]["hard_constraints"]) == 1
+    assert result["active_parsed_intent"]["hard_constraints"][0]["threshold"] == 900.0
 
 
 # @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Requires Anthropic API Key")

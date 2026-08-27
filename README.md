@@ -11,16 +11,16 @@ The system is built using **LangGraph**, structuring the LLM operations in a ReA
 ```mermaid
 graph TD
     A([User Input in Natural Language]) --> B[Intent Parser]
-    B --> C[Weight Proposer]
-    C --> D[Simulator]
-    D --> E[Verifier ]
-    E --> F{Constraints Satisfied?}
-    F -- Yes (Target Achieved) --> G([END])
-    F -- No (Thresholds Failed) --> H{Max Iterations?}
-    H -- Yes --> G
-    H -- No --> I[Recalibrator]
-    I --> D
-
+    B --> C[Feasibility Pre-check]
+    C --> D[Weight Proposer]
+    D --> E[Simulator]
+    E --> F[Verifier]
+    F --> G{Constraints Satisfied?}
+    G -- Yes (Target Achieved) --> H([END])
+    G -- No (Thresholds Failed) --> I{Max Iterations?}
+    I -- Yes --> H
+    I -- No --> J[Recalibrator]
+    I --> E
 ```
 
 ---
@@ -45,7 +45,8 @@ graph TD
  ┣━  test/                 # Test scripts for node verification (unit)
  ┃ ┣━  test_parser.py
  ┃ ┣━  test_proposer.py
- ┃ ┣━  test_recalibration.py
+ ┃ ┣━  test_recalibrator.py
+ ┃ ┣━  test_feasibility.py
  ┃ ┣━  test_retriever.py
  ┃ ┣━  test_safety_guards.py
  ┃ ┗━  test_verifier.py
@@ -60,7 +61,8 @@ graph TD
  ┃ ┣━ llm.py               # Shared ChatAnthropic client
  ┃ ┣━ parser.py            # Natural Language to structured intent
  ┃ ┣━ proposer.py          # Warm-start + micro-adjust weights
- ┃ ┣━ recalibrator.py      # Search + code-enforced relaxation
+ ┃ ┣━ feasibility.py       # Deterministic historical pre-check + HITL apply
+ ┃ ┣━ recalibrator.py      # Search + graduated threshold relaxation
  ┃ ┣━ schemas.py           # MetricType, IntentSchema, unit labels
  ┃ ┣━ verifier.py          # Deterministic SLA checks
  ┃ ┗━ weights.py           # Clip + normalization
@@ -78,15 +80,16 @@ graph TD
 To solve the problem of "Agent Amnesia" during extended optimization loops, the state maintains a strict memory hierarchy:
 
 * `original_parsed_intent`: Immutable: Stores the operator's exact initial goals once after intent_parser_node runs.
-* `active_parsed_intent`: Mutable working memory: Allows the agent to autonomously drop constraints if a request proves physically infeasible.
+* `active_parsed_intent`: Mutable working memory. Hard-constraint **thresholds** may be loosened after evidence-based HITL or in-loop graduated relaxation.
 * `recalibration_history`: An array tracking every failed weight combination and the exact simulation feedback, preventing the LLM from getting stuck in loops.
 
 ### 2. The Nodes (`nodes.py`)
 
-* **Intent Parser (Inverse Translator):** Uses Pydantic structured output to translate human intents ("keep latency under 400ms") into a machine-readable JSON schema (with `primary_objective`, `hard_constraints`, `soft_preferences`, `non_relaxable_constraints` and `relaxation_order`).
+* **Intent Parser (Inverse Translator):** Uses Pydantic structured output to translate human intents ("keep latency under 400ms") into a machine-readable JSON schema (with `primary_objective`, `hard_constraints`, `soft_preferences`, `non_relaxable_constraints` and `relaxation_order`). 
+* **Feasibility:** Deterministic pre-check against historical runs. If the SLA is beyond best-known bounds, the operator is asked to continue, loosen thresholds, or enter a new intent. `app_rollout` may be auto-selected when it is jointly feasible and `best_fit` is not.
 * **Weight Proposer (Warm-Start):** Addresses the "Rugged" Pareto Front. Because LLMs possess semantic bias (e.g., assuming higher latency weights always yield better latency), this node uses a RAG-oriented `retriever.py` to query historical successful runs. The LLM is structured to follow Pydantic baselines and makes micro-adjustments.
-* **Verifier (Deterministic):** Written as pure Python logic (no LLM). It evaluates the simulation metrics (`norm_lat`, `norm_cost`, `norm_sec`) against the active constraints and catches capacity failures (`failures > 0`), ensuring zero arithmetic hallucination.
-* **Recalibrator (Adaptive Search):** Analyzes negative feedback from the Verifier. It performs fine-tuned mathematical adjustments or, if an SLA is impossible, negotiates trade-offs by relaxing constraints based on the user's defined `relaxation_order`.
+* **Verifier (Deterministic):** Written as pure Python logic (no LLM). It evaluates mean operator-unit metrics (`avg_latency`, `avg_cost`, `avg_security`) against the active constraints and catches capacity failures (`failures > 0`), ensuring zero arithmetic hallucination.
+* **Recalibrator (Adaptive Search):** Analyzes negative feedback from the Verifier. It performs fine-tuned weight adjustments or, after at least three distinct failed weight vectors, may loosen a relaxable hard-constraint threshold and report the gap versus the original SLA.
 
 ### 3. The Tool Layer (`tools.py`)
 
@@ -97,7 +100,7 @@ Bridges the LangGraph agent and the underlying simulation.
 
 ### 4. Graph Orchestration (`app.py`)
 
-Constructs the `StateGraph`. Implements a conditional edge routing function (`route_verification`) with an enforced `max_iterations` limit, which is crucial given the computational expense of the `app_rollout` simulator.
+Constructs two graphs: `parse_app` (Parser → Feasibility) and `search_app` (Proposer → Simulator → Verifier ⇄ Recalibrator). Streamlit pauses after Feasibility when historical evidence shows the SLA is infeasible. `route_verification` still enforces `max_iterations`.
 
 ---
 
