@@ -39,7 +39,7 @@ def _render_node(node_name: str, node_state: dict) -> None:
             st.json(node_state.get("feasibility_report"))
 
         elif node_name == "Proposer":
-            st.write("**Historical RAG Context:**")
+            st.write("**Historical Warm-start Context:**")
             st.text(node_state.get("historical_context"))
             st.write("**LLM Reasoning:**")
             st.info(node_state.get("reasoning"))
@@ -127,7 +127,7 @@ def main():
     with st.sidebar:
         st.header("Agent Settings")
         max_iterations = st.slider(
-            "Max Recalibration Iterations", min_value=1, max_value=10, value=5
+            "Max Iterations", min_value=1, max_value=10, value=5
         )
         st.markdown("---")
         st.info(

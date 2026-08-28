@@ -3,6 +3,8 @@ import json
 import glob
 from datetime import datetime
 
+from simulation.config import SEED
+from nodes.llm import MODEL_ID, TEMPERATURE
 
 def _threshold_map(intent: dict) -> dict:
     mapping = {}
@@ -54,7 +56,8 @@ def save_run_analytics(final_state: dict, execution_time_seconds: float):
         "timestamp": datetime.now().isoformat(),
         "execution_time_seconds": round(execution_time_seconds, 2),
         "success": final_state.get("constraints_satisfied", False),
-        "total_iterations": final_state.get("iteration_count", 0),
+        "max_iterations": int(final_state.get("max_iterations") or 0),
+        "iterations_done": int(final_state.get("iteration_count") or 0),
         "constraints_dropped": constraints_dropped,
         "relaxations": _relaxation_records(original_intent, active_intent),
         "algorithm": (
@@ -68,7 +71,10 @@ def save_run_analytics(final_state: dict, execution_time_seconds: float):
             "total_tokens": final_state.get("total_input_tokens", 0) + final_state.get("total_output_tokens", 0)
         },
         "final_weights": final_state.get("current_weights", {}),
-        "final_metrics": final_state.get("simulation_results", {})
+        "final_metrics": final_state.get("simulation_results", {}),
+        "seed": SEED,
+        "model": MODEL_ID,
+        "temperature": TEMPERATURE,
     }
     
     date_str = datetime.now().strftime("%d-%m-%Y")

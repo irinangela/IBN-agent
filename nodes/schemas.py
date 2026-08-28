@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 MetricType = Literal["latency", "cost", "security"]
+OperatorType = Literal["<=", "<", ">=", ">"]
 
 UNIT_LABELS = {
     "latency": "ms (avg per app)",
@@ -23,8 +24,8 @@ class HardConstraint(BaseModel):
     metric: MetricType = Field(
         description="The metric being constrained: 'latency', 'cost', or 'security'."
     )
-    operator: str = Field(
-        description="The comparison operator ('<=', '>=', '<', '>', '==')."
+    operator: OperatorType = Field(
+        description="The comparison operator ('<=', '>=', '<', '>'). Equality is not supported."
     )
     threshold: float = Field(
         description="The numeric threshold in operator units (ms / cost units / security score)."

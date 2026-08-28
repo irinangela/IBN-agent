@@ -24,7 +24,7 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
         )
 
     for hc in hard_constraints:
-        metric_name = hc.get("metric", "").lower()
+        metric_name = (hc.get("metric") or "").lower()
         sim_key = METRIC_RESULT_KEYS.get(metric_name)
 
         if not sim_key or sim_key not in results:
@@ -40,12 +40,16 @@ def verifier_node(state: AgentState) -> Dict[str, Any]:
         unit = UNIT_LABELS.get(metric_name, "")
 
         is_violated = False
-        if op in ["<=", "<"] and sim_val > threshold:
-            is_violated = True
-        elif op in [">=", ">"] and sim_val < threshold:
-            is_violated = True
-        elif op == "==" and sim_val != threshold:
-            is_violated = True
+        if op in ("<=", "<"):
+            is_violated = sim_val > threshold
+        elif op in (">=", ">"):
+            is_violated = sim_val < threshold
+        else:
+            violations.append(
+                f"UNRECOGNIZED OPERATOR: The verifier cannot check '{op}' "
+                "as it is not a known comparison operator."
+            )
+            continue
 
         if is_violated:
             violations.append(

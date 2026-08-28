@@ -139,3 +139,24 @@ def test_verifier_security_minimum():
     }
     pass_result = verifier_node(pass_state)
     assert pass_result["constraints_satisfied"] is True
+
+def test_unsupported_equality_operator():
+    """Equality operators are not supported."""
+    mock_intent = {
+        "hard_constraints": [
+            {"metric": "cost", "operator": "==", "threshold": 400.0}
+        ]
+    }
+    mock_state = {
+        "active_parsed_intent": mock_intent,
+        "simulation_results": {
+            "failures": 0,
+            "avg_cost": 400.0,
+            "avg_security": 10.0,
+            "avg_latency": 900.0,
+        }
+    }
+    result = verifier_node(mock_state)
+    assert result["constraints_satisfied"] is False
+    assert "UNRECOGNIZED OPERATOR" in result["verifier_feedback"]
+

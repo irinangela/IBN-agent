@@ -416,7 +416,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
         ("user",
          "Original Intent:\n{original}\n\n"
          "Active Intent (Current Constraints):\n{active}\n\n"
-         "Historical RAG Context (warm start; weights are non-intuitive — trust outcomes):\n{rag}\n\n"
+         "Historical Warm-start Context (weights are non-intuitive — trust outcomes):\n{rag}\n\n"
          "Past Attempts (this run, operator units):\n{history}\n\n"
          "Latest Verifier Feedback:\n{feedback}\n\n"
          "Code hint — empirically best attempt so far on the violated metric:\n{best_so_far}\n\n"
@@ -473,13 +473,11 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
         prev_w1, prev_w2, prev_w3,
     )
 
-    new_iteration_count = state.get("iteration_count", 0) + 1
 
     return {
         "current_weights": weights,
         "reasoning": result.reasoning + relaxed_msg,
         "active_parsed_intent": parsed_intent,
-        "iteration_count": new_iteration_count,
         "recalibration_history": updated_history,
         "total_input_tokens": in_tokens,
         "total_output_tokens": out_tokens,

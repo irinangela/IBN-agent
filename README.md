@@ -1,10 +1,10 @@
 # Agentic Intent-Based Network (IBN) Optimizer
 
-This repository contains an LLM-powered Agentic Framework designed to solve multi-objective service placement problems on the edge-cloud continuum. It acts as an intelligent middleware that translates natural language operator intents into strict mathematical weights, orchestrates a black-box heuristic simulator, actively recalibrates those weights to navigate the approximate Pareto front, and finds optimal solutions or negotiates trade-offs when solutions are infeasible.
+This repository contains an LLM-powered Agentic Framework designed to solve multi-objective service placement problems on the edge-cloud continuum. It translates natural language operator intents into mathematical weights, runs a black-box heuristic simulator, recalibrates those weights when the SLA fails, and asks the operator or loosens thresholds when a solution is infeasible.
 
 ## Architecture Overview
 
-The system is built using **LangGraph**, structuring the LLM operations in a ReAct (Reason + Act) loop method. This architecture prevents LLM hallucinations by separating semantic reasoning from deterministic mathematical verification.
+The system is built using **LangGraph**, structuring the LLM operations in a fixed deterministic graph method. Semantic reasoning is kept separate from deterministic mathematical verification, so the LLM does not do the numeric checks.
 
 ### System Workflow (State Graph)
 
@@ -17,10 +17,10 @@ graph TD
     E --> F[Verifier]
     F --> G{Constraints Satisfied?}
     G -- Yes (Target Achieved) --> H([END])
-    G -- No (Thresholds Failed) --> I{Max Iterations?}
+    G -- No (Thresholds Failed) --> I{Max Iterations}
     I -- Yes --> H
     I -- No --> J[Recalibrator]
-    I --> E
+    J --> E
 ```
 
 ---
@@ -33,7 +33,7 @@ graph TD
  ┃ ┣━  parser_system_prompt.md
  ┃ ┣━  proposer_system_prompt.md
  ┃ ┗━  recalibration_system_prompt.md
- ┣━  simulation/           # Containes two algorithms, topology and workload generators and core simulation parameters and weights.
+ ┣━  simulation/           # Contains two algorithms, topology and workload generators and core simulation parameters and weights.
  ┃ ┣━  config.py           
  ┃ ┣━  generator.py        
  ┃ ┣━  greedy_fast.py        
@@ -53,7 +53,7 @@ graph TD
  ┣━  tools/
  ┃ ┗━  tools.py            # LangChain tool wrapping the simulator
  ┣━  utils/
- ┃ ┣━  retriever.py        # RAG functionality for querying historical runs
+ ┃ ┣━  retriever.py        # Retrieval-based warm-start functionality for querying historical runs
  ┃ ┗━  analytics.py        # Analyses runs and gathers information for later evaluation
  ┣━  state.py              # LangGraph AgentState definition
  ┣━  nodes/                # LangGraph Node implementations
@@ -81,13 +81,13 @@ To solve the problem of "Agent Amnesia" during extended optimization loops, the 
 
 * `original_parsed_intent`: Immutable: Stores the operator's exact initial goals once after intent_parser_node runs.
 * `active_parsed_intent`: Mutable working memory. Hard-constraint **thresholds** may be loosened after evidence-based HITL or in-loop graduated relaxation.
-* `recalibration_history`: An array tracking every failed weight combination and the exact simulation feedback, preventing the LLM from getting stuck in loops.
+* `recalibration_history`: An array tracking every failed weight combination and the exact simulation feedback, so the LLM can see past failed attempts.
 
-### 2. The Nodes (`nodes.py`)
+### 2. The Nodes (`nodes/`)
 
 * **Intent Parser (Inverse Translator):** Uses Pydantic structured output to translate human intents ("keep latency under 400ms") into a machine-readable JSON schema (with `primary_objective`, `hard_constraints`, `soft_preferences`, `non_relaxable_constraints` and `relaxation_order`). 
 * **Feasibility:** Deterministic pre-check against historical runs. If the SLA is beyond best-known bounds, the operator is asked to continue, loosen thresholds, or enter a new intent. `app_rollout` may be auto-selected when it is jointly feasible and `best_fit` is not.
-* **Weight Proposer (Warm-Start):** Addresses the "Rugged" Pareto Front. Because LLMs possess semantic bias (e.g., assuming higher latency weights always yield better latency), this node uses a RAG-oriented `retriever.py` to query historical successful runs. The LLM is structured to follow Pydantic baselines and makes micro-adjustments.
+* **Weight Proposer (Warm-Start):** Because LLMs possess semantic bias (e.g., assuming higher latency weights always yield better latency), this node uses `retriever.py` to query historical successful runs through a pandas filter and warm-start from those runs. The LLM is structured to follow Pydantic baselines and makes code-guided micro-adjustments.
 * **Verifier (Deterministic):** Written as pure Python logic (no LLM). It evaluates mean operator-unit metrics (`avg_latency`, `avg_cost`, `avg_security`) against the active constraints and catches capacity failures (`failures > 0`), ensuring zero arithmetic hallucination.
 * **Recalibrator (Adaptive Search):** Analyzes negative feedback from the Verifier. It performs fine-tuned weight adjustments or, after at least three distinct failed weight vectors, may loosen a relaxable hard-constraint threshold and report the gap versus the original SLA.
 
@@ -100,17 +100,27 @@ Bridges the LangGraph agent and the underlying simulation.
 
 ### 4. Graph Orchestration (`app.py`)
 
-Constructs two graphs: `parse_app` (Parser → Feasibility) and `search_app` (Proposer → Simulator → Verifier ⇄ Recalibrator). Streamlit pauses after Feasibility when historical evidence shows the SLA is infeasible. `route_verification` still enforces `max_iterations`.
+Constructs two graphs: `parse_app` (Parser → Feasibility) and `search_app` (Proposer → Simulator → Verifier ⇄ Recalibrator). Streamlit pauses after Feasibility check when historical evidence shows the SLA is infeasible. `route_verification` still enforces an iteration cap through `max_iterations` that can be directly specified by the user though the slider in the left sidebar of the UI. That way, if the agent has not yet found successful weights and the iterations done reach the limit, an exit is enforced.
+
+
+### 5. Metrics 
+
+- `avg_cost` / `avg_latency` / `avg_security`: mean per-app values in operator units
+  (cost units, ms, security score). Parser, verifier, and retriever use these.
+- `norm_cost` / `norm_lat` / `norm_sec`: sums of per-app min-max scores over the
+  50-app workload. Each per-app score is roughly in [0, 1]; the sums are
+  typically tens, not values in [0, 1]. Used by the heuristic objective and
+  stored in CSVs, but not used for SLA checks.
 
 ---
 
 ## Interactive UI (`main.py`)
 
-The project features a **Streamlit** frontend designed to visualize the internal reasoning (chain of thought) of the agent. Once we run an optimization with an intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, etc), which is saved in a `results-analytics` directory ready to be used for further evaluation. 
+The project features a **Streamlit** frontend designed to visualize the internal reasoning (execution log of each node) of the agent. Once we run an optimization with an intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, etc), which is saved in a `results-analytics` directory ready to be used for further evaluation. 
 
 ## Automated Testing
 
-The repository includes a comprehensive pytest suite that is integrated into a GitHub Actions CI/CD pipeline to ensure metric verification, mathematical guarantees and LLM invoking are preserved on every commit.
+The repository includes a pytest suite in a GitHub Actions pipeline on push and pull request to main. Tests cover metric checks, weight clipping, and constraint rules. LLM node tests run if `ANTHROPIC_API_KEY` is set.
 
 
 
@@ -118,10 +128,12 @@ The repository includes a comprehensive pytest suite that is integrated into a G
 
 Due to the `ProcessPoolExecutor` utilized in the simulation's `app_rollout`, the entry point is strictly protected with `multiprocessing.freeze_support()` to prevent recursive process spawning on Windows.
 
-1. Clone the repo and install dependencies that might be needed.
-2. Ensure you have your `ANTHROPIC_API_KEY` set in a `.env` file. (or similar key for API calls)
-3. Run the Streamlit server:
+1. Clone the repo 
+2. Install dependencies `pip install -r requirements.txt`
+3. Ensure you have your `ANTHROPIC_API_KEY` set in a `.env` file. 
+4. Run the Streamlit server:
 ```bash
 streamlit run main.py
 ```
-4. The UI allows you to input natural language intents, adjust iteration limits, and watch the real-time execution logs as the agent iterates through the Parser, Proposer, Simulator, Verifier, and Recalibrator nodes.
+5. The UI allows you to input natural language intents, adjust iteration limits, and watch the real-time execution logs as the agent iterates through the nodes.
+6. Search for the results-analytics/ folder to dive into the detailed analytics produced by each run.

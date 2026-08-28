@@ -16,8 +16,9 @@ from tools.tools import run_optimization_simulator
 
 
 def simulator_node(state: AgentState):
+    iteration_count = int(state.get("iteration_count") or 0) + 1
     print("\n" + "="*50)
-    print(f"ITERATION {state.get('iteration_count', 0)}")
+    print(f"ITERATION {iteration_count}")
     print("="*50)
 
     weights = state.get("current_weights", {})
@@ -31,7 +32,10 @@ def simulator_node(state: AgentState):
 
     results_dict = json.loads(result_str)
 
-    return {"simulation_results": results_dict}
+    return {
+        "simulation_results": results_dict,
+        "iteration_count": iteration_count,
+    }
 
 
 def route_verification(state: AgentState) -> Literal["end", "recalibrate"]:

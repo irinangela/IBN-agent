@@ -14,7 +14,7 @@ def run_optimization_simulator(w1: float, w2: float, w3: float, use_rollout: boo
     Runs the black-box heuristic optimizer to place microservices on the edge-cloud continuum.
     Pass the proposed mathematical weights: w1 (Cost), w2 (Security), and w3 (Latency).
     Returns a JSON string containing mean operator-unit metrics (avg_cost, avg_sec, avg_latency),
-    normalized aggregates (norm_*), totals, and failures.
+    workload-sum of per-app min-max scores (norm_*), totals, and failures.
     """
     global _CACHED_TOPO, _CACHED_APPS
     
@@ -66,4 +66,3 @@ def run_optimization_simulator(w1: float, w2: float, w3: float, use_rollout: boo
     
     return json.dumps(output_dict, indent=2)
 
-ALL_TOOLS = [run_optimization_simulator]
