@@ -1,0 +1,112 @@
+{
+    "user_intent": "Keep average latency under 900ms. You may loosen latency if needed.",
+    "initial_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 900.0}
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": ["latency"]
+    },
+    "active_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 945.0}
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": ["latency"]
+    },
+    "timestamp": "2026-08-29T12:00:00",
+    "execution_time_seconds": 12.5,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 3,
+    "constraints_dropped": 0,
+    "relaxations": [
+        {
+            "metric": "latency",
+            "original": 900.0,
+            "active": 945.0,
+            "relative_gap_percent": 5.0,
+            "iteration": 2
+        }
+    ],
+    "relaxation_events": [
+        {
+            "metric": "latency",
+            "original": 900.0,
+            "active": 945.0,
+            "relative_gap_percent": 5.0,
+            "iteration": 2
+        }
+    ],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.2,
+            "w2": 0.1,
+            "w3": 0.7,
+            "avg_cost": 600.0,
+            "avg_security": 8.0,
+            "avg_latency": 980.0,
+            "norm_cost": 10.0,
+            "norm_sec": 20.0,
+            "norm_lat": 30.0,
+            "feedback": "FAILED CONSTRAINTS",
+            "active_thresholds": {"latency": 900.0}
+        },
+        {
+            "attempt": 2,
+            "w1": 0.25,
+            "w2": 0.1,
+            "w3": 0.65,
+            "avg_cost": 580.0,
+            "avg_security": 8.1,
+            "avg_latency": 960.0,
+            "norm_cost": 9.5,
+            "norm_sec": 21.0,
+            "norm_lat": 28.0,
+            "feedback": "FAILED CONSTRAINTS",
+            "active_thresholds": {"latency": 900.0}
+        },
+        {
+            "attempt": 3,
+            "w1": 0.3,
+            "w2": 0.1,
+            "w3": 0.6,
+            "avg_cost": 570.0,
+            "avg_security": 8.2,
+            "avg_latency": 920.0,
+            "norm_cost": 9.0,
+            "norm_sec": 22.0,
+            "norm_lat": 26.0,
+            "feedback": "SUCCESS",
+            "active_thresholds": {"latency": 945.0}
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "needs_operator": false,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {"jointly_feasible": true, "infeasible_metrics": []},
+            "app_rollout": {"jointly_feasible": true, "infeasible_metrics": []}
+        }
+    },
+    "operator_decision": {},
+    "token_usage": {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150},
+    "final_weights": {"w1": 0.3, "w2": 0.1, "w3": 0.6},
+    "final_metrics": {
+        "avg_cost": 570.0,
+        "avg_security": 8.2,
+        "avg_latency": 920.0,
+        "norm_cost": 9.0,
+        "norm_sec": 22.0,
+        "norm_lat": 26.0
+    },
+    "seed": 100,
+    "model": "test",
+    "temperature": 0
+}

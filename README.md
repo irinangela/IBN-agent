@@ -52,12 +52,19 @@ graph TD
  ┃ ┣━  test_feasibility.py
  ┃ ┣━  test_retriever.py
  ┃ ┣━  test_safety_guards.py
- ┃ ┗━  test_verifier.py
+ ┃ ┣━  test_verifier.py
+ ┃ ┣━  test_analytics.py
+ ┃ ┗━  test_plots.py
  ┣━  tools/
  ┃ ┗━  tools.py            # LangChain tool wrapping the simulator
  ┣━  utils/
  ┃ ┣━  retriever.py        # Retrieval-based warm-start functionality for querying historical runs
- ┃ ┗━  analytics.py        # Analyses runs and gathers information for later evaluation
+ ┃ ┣━  analytics.py        # Writes per-run JSON with info and a full attempt log
+ ┃ ┗━  plots/              # Read-only matplotlib figures from JSON/CSV
+ ┣━  scripts/
+ ┃ ┣━  plot_run.py         # Regenerate per-run figures from one JSON
+ ┃ ┣━  plot_dataset.py     # Rugged-front / Pareto / algorithm comparison
+ ┃ ┗━  plot_batch.py       # Aggregate figures over a folder of run JSONs
  ┣━  state.py              # LangGraph AgentState definition
  ┣━  nodes/                # LangGraph Node implementations
  ┃ ┣━ __init__.py          # Public API re-exports
@@ -130,7 +137,7 @@ stored in CSVs, but not used for SLA checks.
 
 ## Interactive UI (`main.py`)
 
-The project features a **Streamlit** frontend designed to visualize the internal reasoning (execution log of each node) of the agent. Once we run an optimization with a valid intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, etc), which is saved in a `results-analytics` directory ready to be used for further evaluation. 
+The project features a **Streamlit** frontend designed to visualize the internal reasoning (execution log of each node) of the agent. Once we run an optimization with a valid intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, attempt trajectory, etc), which is saved in a `results-analytics` directory. Per-run figures (PNG + PDF) are written next to that JSON and shown on the done screen.
 
 ## Automated Testing
 

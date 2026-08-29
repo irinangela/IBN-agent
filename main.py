@@ -1,3 +1,4 @@
+import os
 import time
 import streamlit as st
 import multiprocessing
@@ -90,6 +91,13 @@ def _finish_run(final_state: dict) -> None:
     filepath = save_run_analytics(final_state, time.time() - start_time)
     st.session_state.agent_state = final_state
     st.session_state.analytics_path = filepath
+    st.session_state.figure_paths = []
+    st.session_state.figure_error = ""
+    try:
+        from utils.plots import save_run_figures
+        st.session_state.figure_paths = save_run_figures(filepath)
+    except Exception as exc:
+        st.session_state.figure_error = str(exc)
     st.session_state.phase = "done"
 
 
@@ -115,6 +123,17 @@ def _show_done_banner() -> None:
         f"**Quick Stats:** used **{tokens} tokens**, over "
         f"**{final_state.get('iteration_count', 0)} iterations**."
     )
+    if st.session_state.get("figure_error"):
+        st.warning(f"Figures could not be generated: {st.session_state.figure_error}")
+    pngs = [
+        path for path in (st.session_state.get("figure_paths") or [])
+        if path.endswith(".png") and os.path.isfile(path)
+    ]
+    if pngs:
+        st.markdown("### Run figures")
+        for path in pngs:
+            st.caption(os.path.splitext(os.path.basename(path))[0])
+            st.image(path)
 
 
 def main():
