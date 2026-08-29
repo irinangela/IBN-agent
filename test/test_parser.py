@@ -5,6 +5,7 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from nodes import intent_parser_node, get_relaxation_order
+from nodes.parser import parse_is_checked
 
 def test_get_relaxation_order_keeps_only_hard_metrics():
     intent = {
@@ -15,6 +16,23 @@ def test_get_relaxation_order_keeps_only_hard_metrics():
     }
     updated = get_relaxation_order(intent)
     assert updated["relaxation_order"] == ["cost"]
+
+
+def test_parse_is_checked_requires_named_metrics():
+    guessed = {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 1000.0}
+        ],
+    }
+    assert not parse_is_checked(
+        guessed,
+        "Optimize for low bananas. Average bananas must stay under 1000ms.",
+    )
+    assert parse_is_checked(
+        guessed,
+        "Optimize for low latency. Average latency must stay under 1000ms.",
+    )
 
 
 def test_get_relaxation_order_empties_when_no_overlap():

@@ -57,11 +57,21 @@ def route_verification(state: AgentState) -> Literal["end", "recalibrate"]:
     return "recalibrate"
 
 
+def route_after_parser(state: AgentState) -> Literal["feasibility", "end"]:
+    if state.get("parse_failed"):
+        return "end"
+    return "feasibility"
+
+
 parse_workflow = StateGraph(AgentState)
 parse_workflow.add_node("Parser", intent_parser_node)
 parse_workflow.add_node("Feasibility", feasibility_node)
 parse_workflow.set_entry_point("Parser")
-parse_workflow.add_edge("Parser", "Feasibility")
+parse_workflow.add_conditional_edges(
+    "Parser",
+    route_after_parser,
+    {"feasibility": "Feasibility", "end": END},
+)
 parse_workflow.add_edge("Feasibility", END)
 parse_app = parse_workflow.compile()
 

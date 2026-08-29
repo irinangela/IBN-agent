@@ -1,5 +1,6 @@
 from typing import Dict, Any
 import copy
+import re
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage
@@ -7,6 +8,33 @@ from langchain_core.messages import SystemMessage
 from state import AgentState
 from nodes.llm import llm
 from nodes.schemas import IntentSchema
+
+KNOWN_METRICS = ("latency", "cost", "security")
+
+UNRESOLVED_PARSE_MESSAGE = (
+    "Sorry, I could not map this intent onto the optimizer. "
+    "The only supported metrics are latency, cost, and security. "
+    "Please rewrite the intent and name the metric you care about so I can understand it and map it onto the optimizer. "
+    '(for example: "Optimize for low latency. Average latency must stay under 1000ms.").'
+)
+
+
+def mentioned_metrics(text: str) -> set[str]:
+    lowered = (text or "").lower()
+    return {m for m in KNOWN_METRICS if re.search(rf"\b{m}s?\b", lowered)}
+
+
+def parse_is_checked(intent: Dict[str, Any], user_intent: str) -> bool:
+    """True only if all assigned metrics are actually mentioned in the operator text."""
+    mentioned = mentioned_metrics(user_intent)
+    primary = (intent.get("primary_objective") or "").lower()
+    if primary not in mentioned:
+        return False
+    for hc in intent.get("hard_constraints") or []:
+        metric = (hc.get("metric") or "").lower()
+        if metric and metric not in mentioned:
+            return False
+    return True
 
 
 def get_relaxation_order(intent: Dict[str, Any]) -> Dict[str, Any]:
@@ -57,10 +85,14 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
     # Thresholds stay in operator units (ms / cost / security score). No norm remapping.
     original_intent_dict = get_relaxation_order(parsed_result.model_dump())
     active_intent_dict = copy.deepcopy(original_intent_dict)
+    checked_metrics = parse_is_checked(original_intent_dict, user_intent)
 
     return {
         "original_parsed_intent": original_intent_dict,
         "active_parsed_intent": active_intent_dict,
+        "parse_failed": not checked_metrics,
+        "parse_feedback": "" if checked_metrics else UNRESOLVED_PARSE_MESSAGE,
+        "needs_operator": not checked_metrics,
         "total_input_tokens": in_tokens,
         "total_output_tokens": out_tokens,
     }

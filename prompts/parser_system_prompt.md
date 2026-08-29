@@ -39,9 +39,9 @@ Output: {
 }
 
 Example 2:
-User: "Minimize energy at all costs. But if latency ever goes above 900ms, forget energy! Latency then becomes the only thing that matters"
+User: "Maximize security at all costs. But if latency ever goes above 900ms, forget security! Latency then becomes the only thing that matters"
 Output: {
-  "primary_objective": "cost",
+  "primary_objective": "security",
   "hard_constraints": [
     {
       "metric": "latency",

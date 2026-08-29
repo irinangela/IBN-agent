@@ -24,3 +24,5 @@ class AgentState(TypedDict):
     feasibility_report: Dict[str, Any]
     needs_operator: bool
     operator_decision: Dict[str, Any]
+    parse_failed: bool
+    parse_feedback: str

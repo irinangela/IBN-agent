@@ -19,14 +19,19 @@ def _initial_state(user_intent: str, max_iterations: int) -> dict:
         "needs_operator": False,
         "operator_decision": {},
         "feasibility_report": {},
+        "parse_failed": False,
+        "parse_feedback": "",
     }
 
 
 def _render_node(node_name: str, node_state: dict) -> None:
     with st.expander(f"Node Executed: {node_name}", expanded=True):
         if node_name == "Parser":
-            st.write("**Original Parsed Intent:**")
-            st.json(node_state.get("original_parsed_intent"))
+            if node_state.get("parse_failed"):
+                st.warning(node_state.get("parse_feedback") or "")
+            else:
+                st.write("**Original Parsed Intent:**")
+                st.json(node_state.get("original_parsed_intent"))
 
         elif node_name == "Feasibility":
             st.write("**Feasibility Pre-check:**")
@@ -158,7 +163,24 @@ def main():
     _replay_log()
 
     if phase == "negotiating":
-        report = (st.session_state.agent_state or {}).get("feasibility_report") or {}
+        agent_state = st.session_state.agent_state or {}
+        if agent_state.get("parse_failed"):
+            revised_intent = st.text_area(
+                "Revised intent",
+                value=agent_state.get("user_intent", ""),
+                key="parse_revised_intent",
+            )
+            if st.button("Submit revised intent"):
+                if not (revised_intent or "").strip():
+                    st.warning("Please enter a revised intent.")
+                else:
+                    st.session_state.phase = "parsing"
+                    st.session_state.pending_intent = revised_intent.strip()
+                    st.session_state.execution_log = []
+                    st.rerun()
+            return
+
+        report = agent_state.get("feasibility_report") or {}
         st.warning(
             "No historical run on this seed meets all hard constraints. "
             "Choose how to proceed."
