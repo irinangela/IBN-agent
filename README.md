@@ -55,6 +55,9 @@ graph TD
  ┃ ┣━  test_verifier.py
  ┃ ┣━  test_analytics.py
  ┃ ┗━  test_plots.py
+ ┣━  operator-help/        # Reviewer guides (demo intents + how to read figures)
+ ┃ ┣━  intents.md
+ ┃ ┗━  plots.md
  ┣━  tools/
  ┃ ┗━  tools.py            # LangChain tool wrapping the simulator
  ┣━  utils/
@@ -137,7 +140,7 @@ stored in CSVs, but not used for SLA checks.
 
 ## Interactive UI (`main.py`)
 
-The project features a **Streamlit** frontend designed to visualize the internal reasoning (execution log of each node) of the agent. Once we run an optimization with a valid intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, attempt trajectory, etc), which is saved in a `results-analytics` directory. Per-run figures (PNG + PDF) are written next to that JSON and shown on the done screen.
+The project features a **Streamlit** frontend designed to visualize the internal reasoning (execution log of each node) of the agent. Once we run an optimization with a valid intent as input, a JSON file is generated containing analytics about the process (fail/success, final weights, constraint relaxations, number of iterations, token usage, attempt trajectory, etc), which is saved in a `results-analytics` directory. Per-run figures (PNG + PDF) are written next to that JSON and shown on the done screen. Dataset and aggregate (batch) figures are generated on demand.
 
 ## Automated Testing
 
