@@ -7,7 +7,6 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from nodes.feasibility import apply_operator_decision, feasibility_node
-from simulation.config import SEED
 from utils.retriever import filter_runs
 
 
@@ -52,8 +51,10 @@ def test_feasibility_node_needs_operator_on_impossible_sla():
 
 
 def test_feasibility_node_auto_switch_sets_use_rollout():
-    best_fit = filter_runs(SEED, "best_fit")
-    rollout = filter_runs(SEED, "app_rollout")
+    best_fit = filter_runs(algorithm="best_fit")
+    rollout = filter_runs(algorithm="app_rollout")
+    if best_fit.empty or rollout.empty:
+        pytest.skip("Need both algorithms in the warm-start dataset")
     bf_min = float(best_fit["avg_cost"].min())
     ar_min = float(rollout["avg_cost"].min())
     if not (ar_min < bf_min):

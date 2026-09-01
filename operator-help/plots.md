@@ -73,7 +73,7 @@ python scripts/plot_run.py --json results-analytics/30-08-2026-run-1.json
 
 ## 2. Dataset 
 
-These describe the simulator, not one agent loop. They use `valid == True` and `failures == 0` only. `load_valid_runs` derives `avg_*` as `total_* / successful_apps` and, by default, keeps the live `SEED`.
+These describe the simulator, not one agent loop. They use `valid == True` and `failures == 0` only. `load_valid_runs` derives `avg_*` as `total_* / successful_apps` and, by default, keeps the warm-start retrieval seeds.
 
 Default output directory: `results-analytics/dataset/`.
 
@@ -162,6 +162,6 @@ python scripts/plot_batch.py
 
 - **UI failure:** if figure generation throws, Streamlit still finishes the run and shows a warning (`figure_error`). The JSON is already saved.
 - **Re-plot after changing style:** re-run the matching script so existing PNG/PDF are overwritten.
-- **Sparse vs dense CSV:** today’s `valid_runs.csv` is a small weight set, so rugged-front is a scatter. A dense sweep would switch that panel to a filled contour automatically (`DENSE_SIMPLEX_MIN_POINTS = 50`).
-- **Seed:** dataset plots default to the live simulation seed so they match warm-start and feasibility. (Pass another `--seed` only if you intend a different topology/workload slice)
+- **Sparse vs dense CSV:** `valid_runs.csv` uses a 66-point grid (step 0.1), which crosses `DENSE_SIMPLEX_MIN_POINTS = 50`, so the rugged-front panel renders as a filled contour rather than a scatter.
+- **Seed:** dataset plots default to the warm-start retrieval seeds so they match warm-start and feasibility. Pass `--seed 210` for the live instance, or `--all-seeds` for the whole family.
 - **Dependencies:** `matplotlib` is in `requirements.txt`.

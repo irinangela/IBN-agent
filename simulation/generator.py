@@ -171,8 +171,8 @@ def generate_topology() -> Topology:
             c_min, c_max = base_cost
             base_c = c_min + (norm_speed * (c_max - c_min))
             
-            # 3. Add Stochastic Disturbance (+/- 10%)
-            dist_factor = np.random.uniform(0.9, 1.1)
+            # 3. Add Stochastic Disturbance (tight band; was ±10%)
+            dist_factor = np.random.uniform(*cfg.COST_DISTURBANCE)
             cost = round(base_c * dist_factor, 2)
             
             # Sample Specs from Base Ranges (Restored)
@@ -262,13 +262,13 @@ def generate_workload(num_apps=cfg.NUM_APPS) -> list[Application]:
             
             # Stochastic Security Overheads
             # Tier 0 is Baseline (1.0)
-            # Tiers 1, 2, 3: [Base-20%, Base+20%]
-            # cfg.OVERHEAD_CPU_BASE has the baselines
+            # Tiers 1, 2, 3: [Base ± SEC_OVERHEAD_JITTER]
+            jitter = float(getattr(cfg, "SEC_OVERHEAD_JITTER", 0.2))
             sec_ov = [1.0] * 4
             for t in range(1, 4):
                  base = cfg.OVERHEAD_CPU_BASE[t]
-                 low = base * 0.8
-                 high = base * 1.2
+                 low = base * (1.0 - jitter)
+                 high = base * (1.0 + jitter)
                  val = np.random.uniform(low, high)
                  sec_ov[t] = round(val, 3)
             

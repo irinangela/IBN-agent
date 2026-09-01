@@ -30,7 +30,8 @@ def run_optimization_simulator(w1: float, w2: float, w3: float, use_rollout: boo
     cfg.W3 = float(w3)
     sys.modules["config"] = cfg
 
-    # Generate and cache topology/workload (Only runs once per session)
+    # Generate and cache topology/workload once per session from the LIVE seed.
+    # Historical warm-start data is a different seed set (config.WARM_START_SEEDS).
     if _CACHED_TOPO is None or _CACHED_APPS is None:
         print("\n[Tool] Initializing topology and workload cache...")
         np.random.seed(cfg.SEED)

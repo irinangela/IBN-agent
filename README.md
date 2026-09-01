@@ -65,6 +65,7 @@ graph TD
  ┃ ┣━  analytics.py        # Writes per-run JSON with info and a full attempt log
  ┃ ┗━  plots/              # Read-only matplotlib figures from JSON/CSV
  ┣━  scripts/
+ ┃ ┣━  generate_dataset.py # Generate valid_runs.csv (Near-neighbor seed × weight sweep)
  ┃ ┣━  plot_run.py         # Regenerate per-run figures from one JSON
  ┃ ┣━  plot_dataset.py     # Rugged-front / Pareto / algorithm comparison
  ┃ ┗━  plot_batch.py       # Aggregate figures over a folder of run JSONs
@@ -106,7 +107,7 @@ To solve the problem of "Agent Amnesia" during extended optimization loops, the 
 
 - **Intent Parser (Inverse Translator):** Uses Pydantic structured output to translate human intents ("keep latency under 400ms") into a machine-readable JSON schema (with `primary_objective`, `hard_constraints`, `soft_preferences`, `non_relaxable_constraints` and `relaxation_order`). If the parser cannot map the objectives to the internal optimization standrards (e.g., due to unrecognized metrics), the operator is asked to rephrase the intent.
 - **Feasibility:** Deterministic pre-check against historical runs. If the SLA is beyond best-known bounds, the operator is asked to continue, loosen thresholds, or enter a new intent. `app_rollout` may be auto-selected when it is jointly feasible and `best_fit` is not. If multiple thresholds are set, and the historical runs prove that they can not be met simultaneously, the operator is given the choice of rexaling one of them in order to restore feasibillity.
-- **Weight Proposer (Warm-Start):** Because LLMs possess semantic bias (e.g., assuming higher latency weights always yield better latency), this node uses `retriever.py` to query historical successful runs through a pandas filter and warm-start from those runs. The LLM is structured to follow Pydantic baselines and makes code-guided micro-adjustments.
+- **Weight Proposer (Warm-Start):** Because LLMs possess semantic bias (e.g., assuming higher latency weights always yield better latency), this node uses `retriever.py` to query historical successful runs through a pandas filter and warm-start from those runs. Per weight vector, outcomes are averaged across the retrieved near-neighbor seeds before ranking, so a lucky single seed cannot dominate the initial guess. The LLM is structured to follow Pydantic baselines and makes code-guided micro-adjustments. History is filtered to `WARM_START_SEEDS` (similar past instances), not the live `SEED`.
 - **Verifier (Deterministic):** Written as pure Python logic (no LLM). It evaluates mean operator-unit metrics (`avg_latency`, `avg_cost`, `avg_security`) against the active constraints and catches capacity failures (`failures > 0`), ensuring zero arithmetic hallucination.
 - **Recalibrator (Adaptive Search):** Analyzes negative feedback from the Verifier. It performs fine-tuned weight adjustments or, after at least three distinct failed weight vectors, may loosen a relaxable hard-constraint threshold and report the gap versus the original SLA.
 
@@ -116,7 +117,7 @@ To solve the problem of "Agent Amnesia" during extended optimization loops, the 
 
 Bridges the LangGraph agent and the underlying simulation.
 
-- **Optimization:** Employs global caching for the network topology and application workload (`_CACHED_TOPO`, `_CACHED_APPS`). This ensures they are generated only once per session based on `config.SEED`, cutting out redundant computation during the agentic loop.
+- **Optimization:** Employs global caching for the network topology and application workload (`_CACHED_TOPO`, `_CACHED_APPS`). This ensures they are generated only once per session based on the live `config.SEED`, cutting out redundant computation during the agentic loop. Warm-start and feasibility read `WARM_START_SEEDS` (near-neighbor historical instances), not the live seed.
 - **Safeguards:** Instead of allowing the LLM to write raw tool-call parameters, the orchestration extracts the proposed weights from the state and injects them into `config.py`.
 
 
@@ -134,6 +135,38 @@ Constructs two graphs: `parse_app` (Parser → Feasibility) and `search_app` (Pr
 typically tens, not values in [0, 1]. Used by the heuristic objective and
 stored in CSVs, but not used for SLA checks.
 
+
+
+### 6. Live instance vs historical warm-start
+
+A **seed** is one generated topology plus one 50-app batch. The agent places the live seed (`SEED = 210`). Warm-start and feasibility read **near-neighbor** historical seeds (`WARM_START_SEEDS = 200-209`), never the live seed, unless `WARM_START_MODE = "oracle"` (idealized case). Continuous generator ranges are collapsed to a tight band and every app has exactly 5 services, so the historical instances may resemble to the live batch without actually being clones.
+
+One CSV covers every retrieval condition. `valid_runs.csv` holds the whole pool plus the live seed. Pruning the dataset only changes which rows the retriever may read, via `WARM_START_MODE` and `WARM_START_K`:
+
+| Condition | `WARM_START_MODE` | `WARM_START_K` | Seeds read |
+|---|---|---|---|
+| Idealized oracle | `oracle` | ignored | 210 (the live instance) |
+| Single neighbor | `near_neighbor` | `1` | 200 |
+| Double neighbor | `near_neighbor` | `2` | 200-201 |
+| Five neighbors | `near_neighbor` | `5` | 200–204 |
+| Full pool | `near_neighbor` | `None` | 200–209 |
+
+By keeping `SEED` fixed across conditions, retrieval size is the only variable. Each saved run JSON records `warm_start_mode` and `warm_start_seeds`, so the condition is recoverable after the fact.
+
+Both algorithms share `WARM_START_WEIGHT_SETS` (66 points at step 0.1). Giving both algorithms the same fine grid avoids making one of them look artificially strong in the feasibility pre-check. Grid-density experiments subsample this one grid at read time, so they need no re-generation.
+
+Preview the plan and time estimate without simulating:
+
+```bash
+python scripts/generate_dataset.py --algorithms best_fit,app_rollout --dry-run
+```
+
+Build the full corpus (best-fit is instant, rollout dominates; resume-safe on `(seed, weights, algorithm)`):
+
+```bash
+python scripts/generate_dataset.py --algorithms best_fit,app_rollout
+```
+
 ---
 
 
@@ -148,7 +181,6 @@ The repository includes a pytest suite in a GitHub Actions pipeline on push and 
 
 ### How to Run
 
-Due to the `ProcessPoolExecutor` utilized in the simulation's `app_rollout`, the entry point is strictly protected with `multiprocessing.freeze_support()` to prevent recursive process spawning on Windows.
 
 1. Clone the repo
 2. Install dependencies `pip install -r requirements.txt`

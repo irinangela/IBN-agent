@@ -2,10 +2,11 @@
 
 import json
 import os
+from typing import Optional, Sequence
 
 import pandas as pd
 
-from simulation.config import SEED
+from simulation.config import retrieval_seeds
 
 from utils.plots.style import AVG_KEYS, NORM_KEYS
 
@@ -53,10 +54,16 @@ def attempts_of(run: dict) -> list:
     return [row]
 
 
-def load_valid_runs(csv_path: str, seed: int = SEED) -> pd.DataFrame:
+def load_valid_runs(
+    csv_path: str,
+    seed: Optional[int] = None,
+    seeds: Optional[Sequence[int]] = None,
+    *,
+    all_seeds: bool = False,
+) -> pd.DataFrame:
     """Load the historical runs from the CSV file.
     Calculate the average cost, security, and latency per app.
-    Filter the runs by the seed if provided.
+    Default seed filter is the warm-start retrieval set, not the live instance.
     """
     frame = pd.read_csv(csv_path)
     if frame.empty:
@@ -66,8 +73,14 @@ def load_valid_runs(csv_path: str, seed: int = SEED) -> pd.DataFrame:
     frame["avg_cost"] = frame["total_cost"] / n_apps
     frame["avg_security"] = frame["total_security"] / n_apps
     frame["avg_latency"] = frame["total_latency"] / n_apps
-    if seed is not None:
-        frame = frame[frame["seed"] == seed]
+    if all_seeds:
+        return frame.reset_index(drop=True)
+    if seeds is None and seed is None:
+        seeds = retrieval_seeds()
+    elif seed is not None:
+        seeds = (seed,)
+    if seeds is not None:
+        frame = frame[frame["seed"].isin(list(seeds))]
     return frame.reset_index(drop=True)
 
 

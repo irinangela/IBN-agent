@@ -5,7 +5,6 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel, Field
 
 from state import AgentState
-from simulation.config import SEED
 from utils.retriever import get_warm_start_context
 from nodes.llm import llm
 from nodes.weights import clip_and_normalize_weights
@@ -45,7 +44,7 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     parsed_intent = state["active_parsed_intent"]
     algorithm = "app_rollout" if state.get("use_rollout") else "best_fit"
     historical_context = get_warm_start_context(
-        parsed_intent, seed=SEED, algorithm=algorithm
+        parsed_intent, algorithm=algorithm
     )
 
     structured_llm = llm.with_structured_output(ProposedWeights, include_raw=True)

@@ -4,7 +4,7 @@ import glob
 from datetime import datetime
 from typing import Optional
 
-from simulation.config import SEED
+from simulation.config import WARM_START_MODE, WARM_START_SEEDS, SEED, retrieval_seeds
 from nodes.llm import MODEL_ID, TEMPERATURE
 
 def _threshold_map(intent: dict) -> dict:
@@ -140,6 +140,9 @@ def save_run_analytics(final_state: dict, execution_time_seconds: float):
         "final_weights": final_state.get("current_weights", {}),
         "final_metrics": final_state.get("simulation_results", {}),
         "seed": SEED,
+        "warm_start_seeds": list(retrieval_seeds()),
+        "warm_start_mode": WARM_START_MODE,
+        "historical_seeds": list(WARM_START_SEEDS),     # we need both the warm_start_seeds and the historical_seeds for different modes
         "model": MODEL_ID,
         "temperature": TEMPERATURE,
     }

@@ -395,7 +395,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     feedback = state.get("verifier_feedback", "")
     history = list(state.get("recalibration_history") or [])
     results = state.get("simulation_results") or {}
-    rag_context = state.get("historical_context") or "No historical context available."
+    warm_start_context = state.get("historical_context") or "No historical context available."
 
     current_attempt_record = build_attempt_record(
         attempt_num=len(history) + 1,
@@ -416,7 +416,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
         ("user",
          "Original Intent:\n{original}\n\n"
          "Active Intent (Current Constraints):\n{active}\n\n"
-         "Historical Warm-start Context (weights are non-intuitive — trust outcomes):\n{rag}\n\n"
+         "Historical Warm-start Context (weights are non-intuitive — trust outcomes):\n{warm_start}\n\n"
          "Past Attempts (this run, operator units):\n{history}\n\n"
          "Latest Verifier Feedback:\n{feedback}\n\n"
          "Code hint — empirically best attempt so far on the violated metric:\n{best_so_far}\n\n"
@@ -428,7 +428,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     response = chain.invoke({
         "original": json.dumps(original_intent, indent=2),
         "active": json.dumps(parsed_intent, indent=2),
-        "rag": rag_context,
+        "warm_start": warm_start_context,
         "history": format_attempts_for_prompt(updated_history),
         "feedback": feedback,
         "best_so_far": best_so_far,

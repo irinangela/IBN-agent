@@ -2,12 +2,17 @@ import copy
 from typing import Any, Dict
 
 from state import AgentState
-from simulation.config import SEED
 from utils.retriever import feasibility_report
 
 
 def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
-    lines = [f"Feasibility pre-check on seed {report.get('seed')}. \n\n"]
+    seeds = report.get("seeds") or [report.get("seed")]
+    mode = report.get("warm_start_mode") or "near_neighbor"
+    live = report.get("live_seed")
+    lines = [
+        f"Feasibility pre-check on Warm-start seeds {seeds} "
+        f"(mode={mode}, live seed={live}). \n\n"
+    ]
     for algorithm, info in (report.get("per_algorithm") or {}).items():
         bounds = info.get("bounds") or {}
         joint = (
@@ -84,7 +89,7 @@ def feasibility_node(state: AgentState) -> Dict[str, Any]:
     """Code-only pre-check: skip search when history proves the SLA infeasible."""
 
     intent = state.get("active_parsed_intent") or {}
-    report = feasibility_report(intent, seed=SEED)
+    report = feasibility_report(intent)
     updates: Dict[str, Any] = {
         "feasibility_report": report,
         "use_rollout": report.get("chosen_algorithm") == "app_rollout",

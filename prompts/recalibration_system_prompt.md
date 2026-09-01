@@ -30,7 +30,6 @@ YOUR MISSION (in order):
    - it is in relaxation_order
    - it is NOT in non_relaxable_constraints
    - at least 3 distinct failed weight vectors exist (code will refuse earlier)
-   - if after 4 attempts the current value and the threshold have a gap of over 70% 
    Propose a strictly looser threshold, justified by best-so-far or historical
    best-known plus a small margin (e.g. 5%). Cost/latency: raise it.
    Security: lower it.

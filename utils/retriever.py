@@ -1,9 +1,9 @@
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Sequence
 
 import pandas as pd
 
-from simulation.config import SEED
+from simulation.config import WARM_START_MODE, SEED, retrieval_seeds
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
@@ -35,16 +35,35 @@ except FileNotFoundError as e:
     raise e
 
 
-def filter_runs(seed: int = SEED, algorithm: str = DEFAULT_ALGORITHM) -> pd.DataFrame:
-    """Valid, failure-free rows for one seed and algorithm.
-    Seed selects the live topology and workload (no separate variant column).
+def resolve_retrieval_seeds(
+    seed: Optional[int] = None,
+    seeds: Optional[Sequence[int]] = None,
+) -> tuple:
+    """Default: warm-start near-neighbors. An explicit seed/seeds list overrides."""
+    if seeds is not None:
+        return tuple(int(s) for s in seeds)
+    if seed is not None:
+        return (int(seed),)
+    return retrieval_seeds()
+
+
+def filter_runs(
+    seed: Optional[int] = None,
+    algorithm: str = DEFAULT_ALGORITHM,
+    seeds: Optional[Sequence[int]] = None,
+) -> pd.DataFrame:
+    """Valid, failure-free rows for the retrieval seed set and one algorithm.
+
+    By default this is WARM_START_SEEDS (near-neighbor mode), not the live SEED.
+    Pass seed=... only when you intentionally want a single instance slice.
     """
     if df.empty:
         return df.copy()
+    wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
     return df[
         (df["valid"] == True)
         & (df["failures"] == 0)
-        & (df["seed"] == seed)
+        & (df["seed"].isin(wanted))
         & (df["algorithm"] == algorithm)
     ].copy()
 
@@ -79,6 +98,7 @@ def is_jointly_feasible(core_df: pd.DataFrame, hard_constraints: list) -> bool:
 
 
 def best_known_bounds(core_df: pd.DataFrame) -> Dict[str, float]:
+    """Best-known values for each metric, used for the feasibility pre-check."""
     bounds: Dict[str, float] = {}
     if core_df is None or core_df.empty:
         return bounds
@@ -150,12 +170,12 @@ def _better_bound(metric: str, per_algorithm: Dict[str, Any]) -> Optional[float]
     return _pick_better(metric, values)
 
 
-def _conditional_best(metric: str, others: list, seed: int) -> Optional[float]:
+def _conditional_best(metric: str, others: list, seeds: Sequence[int]) -> Optional[float]:
     """Best-known value of metric among runs that satisfy the other constraints."""
 
     values = []
     for algorithm in ALGORITHMS:
-        runs = filter_runs(seed, algorithm)
+        runs = filter_runs(algorithm=algorithm, seeds=seeds)
         filtered = apply_hard_constraints(runs, others)
         bound = best_known_bounds(filtered).get(metric)
         if bound is not None:
@@ -198,8 +218,8 @@ def _best_observed_lines(
     return lines
 
 
-def _algorithm_slice(seed: int, algorithm: str, hard_constraints: list) -> Dict[str, Any]:
-    runs = filter_runs(seed, algorithm)
+def _algorithm_slice(seeds: Sequence[int], algorithm: str, hard_constraints: list) -> Dict[str, Any]:
+    runs = filter_runs(algorithm=algorithm, seeds=seeds)
     bounds = best_known_bounds(runs)
     infeasible = []
     for constraint in hard_constraints or []:
@@ -215,16 +235,21 @@ def _algorithm_slice(seed: int, algorithm: str, hard_constraints: list) -> Dict[
     }
 
 
-def feasibility_report(parsed_intent: Dict[str, Any], seed: int = SEED) -> Dict[str, Any]:
-    """Deterministic bounds and joint feasibility per algorithm for this seed."""
+def feasibility_report(
+    parsed_intent: Dict[str, Any],
+    seed: Optional[int] = None,
+    seeds: Optional[Sequence[int]] = None,
+) -> Dict[str, Any]:
+    """Deterministic bounds and joint feasibility on the warm-start seed set."""
 
+    wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
     hard_constraints = parsed_intent.get("hard_constraints") or []
     non_relaxable = {
         m.lower() for m in (parsed_intent.get("non_relaxable_constraints") or [])
     }
 
     per_algorithm = {
-        algorithm: _algorithm_slice(seed, algorithm, hard_constraints)
+        algorithm: _algorithm_slice(wanted, algorithm, hard_constraints)
         for algorithm in ALGORITHMS
     }
 
@@ -256,7 +281,7 @@ def feasibility_report(parsed_intent: Dict[str, Any], seed: int = SEED) -> Dict[
                 for other in others
                 if (other.get("metric") or "").lower() in METRIC_COLS
             ]
-            best = _conditional_best(metric_name, others, seed)
+            best = _conditional_best(metric_name, others, wanted)
             if best is None:
                 # fall back to the best-known value of the independent metric
                 best = _better_bound(metric_name, per_algorithm)
@@ -275,7 +300,10 @@ def feasibility_report(parsed_intent: Dict[str, Any], seed: int = SEED) -> Dict[
             })
 
     return {
-        "seed": seed,
+        "seed": wanted[0] if wanted else None,
+        "seeds": list(wanted),
+        "live_seed": SEED,
+        "warm_start_mode": WARM_START_MODE,
         "needs_operator": needs_operator,
         "auto_switched_to": auto_switched_to,
         "chosen_algorithm": chosen_algorithm,
@@ -284,20 +312,45 @@ def feasibility_report(parsed_intent: Dict[str, Any], seed: int = SEED) -> Dict[
     }
 
 
+def _weight_columns(frame: pd.DataFrame) -> list[str]:
+    if all(col in frame.columns for col in ("W1", "W2", "W3")):
+        return ["W1", "W2", "W3"]
+    if all(col in frame.columns for col in ("w1", "w2", "w3")):
+        return ["w1", "w2", "w3"]
+    return []
+
+
+def average_by_weight(frame: pd.DataFrame) -> pd.DataFrame:
+    """Collapse retrieved seeds to one row per weight triplet: mean cost/security/latency."""
+    if frame is None or frame.empty:
+        return pd.DataFrame() if frame is None else frame.copy()
+    weight_cols = _weight_columns(frame)
+    metric_cols = [col for col in METRIC_COLS.values() if col in frame.columns]
+    if not weight_cols or not metric_cols:
+        return frame.copy()
+    return frame.groupby(weight_cols, as_index=False)[metric_cols].mean()
+
+
 def get_warm_start_context(
     parsed_intent: Dict[str, Any],
     top_k: int = 3,
     *,
-    seed: int = SEED,
+    seed: Optional[int] = None,
+    seeds: Optional[Sequence[int]] = None,
     algorithm: str = DEFAULT_ALGORITHM,
 ) -> str:
     """
     Filters the historical dataset based on hard constraints and primary objective,
     returning the best historical weight combinations for a 'Warm Start'.
-    Constraints are matched in mean operator units (avg_*), matching the verifier.
+
+    Outcomes are averaged per weight vector across the retrieved near-neighbor
+    seeds, then ranked. Constraints are matched in mean operator units (avg_*),
+    matching the verifier. Defaults to retrieval_seeds(), not the live instance.
     """
-    valid_df = filter_runs(seed, algorithm)
-    filtered_df = apply_hard_constraints(valid_df, parsed_intent.get("hard_constraints", []))
+    wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
+    valid_df = filter_runs(algorithm=algorithm, seeds=wanted)
+    averaged = average_by_weight(valid_df)
+    filtered_df = apply_hard_constraints(averaged, parsed_intent.get("hard_constraints", []))
 
     applied_constraints = [
         _constraint_label(constraint)
@@ -308,7 +361,7 @@ def get_warm_start_context(
     used_fallback = False
     if filtered_df.empty:
         used_fallback = True
-        filtered_df = valid_df.copy()
+        filtered_df = averaged.copy()
 
     primary = (parsed_intent.get("primary_objective") or "").lower()
     if primary in METRIC_COLS and not filtered_df.empty:
@@ -343,7 +396,6 @@ def get_warm_start_context(
         w1_val = row.get("W1", row.get("w1", 0.0))
         w2_val = row.get("W2", row.get("w2", 0.0))
         w3_val = row.get("W3", row.get("w3", 0.0))
-
         context_str += (
             f"- Candidate Weights: w1(cost)={w1_val:.2f}, w2(sec)={w2_val:.2f}, w3(lat)={w3_val:.2f} "
             f"| Results -> Cost: {row['avg_cost']:.3f}, Security: {row['avg_security']:.3f}, "
