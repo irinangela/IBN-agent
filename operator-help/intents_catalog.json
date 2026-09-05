@@ -1,0 +1,2101 @@
+{
+  "meta": {
+    "warm_start_seeds": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207,
+      208,
+      209
+    ],
+    "live_seed": 210,
+    "relaxation_margin": 0.05,
+    "bounds_snapshot_from_current_dataset": {
+      "warm_start_best_fit": {
+        "min_avg_cost": 306.536,
+        "max_avg_security": 15.2,
+        "min_avg_latency_ms": 508.131
+      },
+      "warm_start_app_rollout": {
+        "min_avg_cost": 529.07,
+        "max_avg_security": 14.92,
+        "min_avg_latency_ms": 566.137
+      }
+    },
+    "feasibility_classes": {
+      "easy_feasible": "Slack SLA. Many historical matches. Live seed should succeed from warm-start, usually on the first attempt.",
+      "tight_feasible": "Historically jointly feasible with a modest match count. Live seed still has matching runs.",
+      "edge_feasible": "At or just inside a bound. Very few historical and/or live matches. Stresses ranking quality, not HITL.",
+      "historical_optimistic": "Warm-start history is jointly feasible, but live seed 210 has zero matching runs. Tests retrieval optimism vs new's instance.",
+      "minor_relaxation": "Requested SLA is slightly beyond a bound. The 5% HITL offer restores a region the live seed can meet.",
+      "jointly_infeasible": "Each hard constraint is independently attainable but no stored run meets them together. HITL offers conditional relaxations.",
+      "independently_infeasible": "At least one threshold is beyond the independent best-known value. HITL still offers best-known x 1.05.",
+      "relaxation_insufficient_for_live": "History is infeasible. The 5% HITL offer restores a historical region, but live seed 210 still cannot meet the offered threshold.",
+      "deeply_infeasible": "Far outside the attainable region. Independent 5% offers may still leave a joint hole.",
+      "unconstrained": "No numeric hard SLA. Proposer ranks purely by primary_objective.",
+      "parser_unresolved": "Expected parse_failed=true. Operator must rewrite before search."
+    },
+    "categories": [
+      "target_metrics length 1 vs 2 vs 3",
+      "feasibility_class",
+      "historical_optimistic vs easy_feasible (same linguistic style, different live outcome)",
+      "jointly_infeasible vs independently_infeasible",
+      "non_relaxable vs relaxable on the same SLA",
+      "parser_unresolved vs parse_ok"
+    ],
+    "expected_field_rules": {
+      "relaxation_order": "Only metrics the operator text explicitly allows loosening (relax / loosen / if needed / if stuck / you may). A hard constraint alone is not enough. The metric must also appear in hard_constraints. In-loop Recalibrator will not loosen a metric missing from this list.",
+      "non_relaxable_constraints": "Only never / always / in all cases, or an explicit non-relaxable statement. 'must stay under' is a hard SLA, not a non-relaxable flag. HITL hides Relax when the metric is in this list.",
+      "hitl_vs_in_loop": "HITL Relax is gated by non_relaxable_constraints. In-loop Recalibrator is gated by relaxation_order AND not non_relaxable."
+    }
+  },
+  "intents": [
+    {
+      "id": "LAT-01",
+      "text": "Optimize for low latency. Average latency must stay under 1000ms. Cost and security are secondary.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 812,
+      "live_best_fit_match_count": 49,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "latency",
+        "easy_feasible",
+        "parse_ok",
+        "ui_default",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Baseline first-try success. Warm-start should return matching runs and the verifier should pass without HITL or in-loop relaxation.",
+      "parser_note": "'must stay under' is a hard SLA, not a never-relax keyword. Same sentence as the UI default. Contrast POL-01 which uses 'never'."
+    },
+    {
+      "id": "LAT-02",
+      "text": "Keep mean per-app latency at or below 700 milliseconds. Prefer the lowest latency you can still achieve under that cap.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 700.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 378,
+      "live_best_fit_match_count": 33,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "latency",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Comfortable but no longer slack. Distinguishes whether warm-start ranking still finds a good latency corner when the filter is narrower than LAT-01.",
+      "parser_note": "No relax/loosen cue, so relaxation_order is empty even though latency is a hard constraint."
+    },
+    {
+      "id": "LAT-03",
+      "text": "Average latency must stay under 550ms. Security and cost are soft preferences only.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 74,
+      "live_best_fit_match_count": 8,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "latency",
+        "tight_feasible",
+        "parse_ok",
+        "operator_help",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Above the 508 ms historical floor, so Feasibility proceeds. Live best_fit can do about 520 ms. Contrast with LAT-05 (500 ms) which pauses."
+    },
+    {
+      "id": "LAT-04",
+      "text": "We need average latency no worse than 534 ms. Optimize latency, cost and security are not main concerns.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 534.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 34,
+      "live_best_fit_match_count": 3,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "latency",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "534 ms is the HITL offer (508 x 1.05). Asking for it up front tests the edge of the feasible set without pausing the operator: history says yes, live has only 3 matching best_fit rows."
+    },
+    {
+      "id": "LAT-05",
+      "text": "Optimize for low latency. Average latency must stay under 500ms. Cost and security are secondary.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 500.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "minor_relaxation",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "latency",
+        "minor_relaxation",
+        "parse_ok",
+        "hitl",
+        "operator_help",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Just below the 508 ms floor. HITL offers about 534 ms. Live can do 520 ms, so accepting the offer should succeed. Canonical minor-relaxation case."
+    },
+    {
+      "id": "LAT-06",
+      "text": "Interactive traffic only: average latency has to remain under 400 ms. Do what you can with cost and security after that.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 400.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "independently_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "latency",
+        "independently_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Same HITL offer as LAT-05 (approx. 534 ms) but the relative concession is much larger (approx. 33% vs requested). Shows that independent infeasibility still maps to one offered threshold."
+    },
+    {
+      "id": "LAT-07",
+      "text": "Hard real-time: average latency must stay under 200 milliseconds. Latency is the only thing that matters.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 200.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "deeply_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "latency",
+        "deeply_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Physically unattainable on this topology. Accepting the 534 ms offer would still succeed on live, which is the point: the agent cannot invent a 200 ms placement, it can only surface the bound."
+    },
+    {
+      "id": "COST-01",
+      "text": "Minimize average cost. Keep cost at or below 1000. Latency and security are secondary.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 1000.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 626,
+      "live_best_fit_match_count": 35,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "cost",
+        "easy_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Cost analogue of LAT-01. Warm-start should rank by lowest avg_cost among a large feasible slice."
+    },
+    {
+      "id": "COST-02",
+      "text": "The budget cap is 700 cost units per app on average. Prefer cheaper placements whenever the cap is met.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 700.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 261,
+      "live_best_fit_match_count": 23,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "cost",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Mid-range cost SLA. Still jointly feasible, but the cheap corner of the front is more constrained than COST-01."
+    },
+    {
+      "id": "COST-03",
+      "text": "Average cost must not exceed 400. Optimize for cost. Latency and security can wait.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 400.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 51,
+      "live_best_fit_match_count": 5,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "cost",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Well above the 307 historical floor and the 329 live floor, but already on the cheap tail (only 5 live best_fit matches)."
+    },
+    {
+      "id": "COST-04",
+      "text": "Squeeze average cost down to 329 or less. Cost is the objective, the other two metrics are unconstrained.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 329.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 11,
+      "live_best_fit_match_count": 1,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "cost",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Live best cost is 328.89, so 329 is the last integer threshold that live best_fit can still meet. One matching live row: a precision test of warm-start vs search."
+    },
+    {
+      "id": "COST-05",
+      "text": "Stay under an average cost of 300. If the cap cannot be met you may loosen cost slightly.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 300.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost"
+      ],
+      "feasibility_class": "relaxation_insufficient_for_live",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "cost",
+        "relaxation_insufficient_for_live",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Historical best is 306.5 so HITL offers approx. 322. Live best is 328.9, so accepting the 5% offer still fails. Contrast with LAT-05, where the same policy succeeds on live."
+    },
+    {
+      "id": "COST-06",
+      "text": "We cannot spend more than 200 cost units per app on average. Make cost the primary objective.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 200.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "deeply_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "cost",
+        "deeply_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Far below every observed cost. Even the HITL offer (approx. 322) is below live 328.9, so continue-anyway and relax-to-offer both fail unless the operator rewrites the intent."
+    },
+    {
+      "id": "SEC-01",
+      "text": "Keep average security at least 8. Prefer low latency. Cost can be sacrificed first if needed.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 1076,
+      "live_best_fit_match_count": 53,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "easy_feasible",
+        "parse_ok",
+        "higher_is_better",
+        "operator_help",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Checks that the parser emits security >= (not <=) and that warm-start sorts by highest neighborhood-averaged security.",
+      "parser_note": "'Cost can be sacrificed' is a soft preference. Cost is not a hard constraint, so it cannot appear in relaxation_order."
+    },
+    {
+      "id": "SEC-02",
+      "text": "Average security score must be at least 12. Maximize security under that floor.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 12.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 835,
+      "live_best_fit_match_count": 42,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "higher_is_better",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Still lots of matches, but the cheap/fast low-security corner is filtered out. Useful as the mid point on the security axis."
+    },
+    {
+      "id": "SEC-03",
+      "text": "Average security must stay at 14 or above. Security is the objective, keep latency and cost reasonable if possible.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 393,
+      "live_best_fit_match_count": 30,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "higher_is_better",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "High-security slice that live can still hit (max 14.86). Pairs with LS-04, where the same 14 combined with tight latency becomes a Pareto hole."
+    },
+    {
+      "id": "SEC-04",
+      "text": "Push average security to at least 14.86. Maximize security.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.86
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 81,
+      "live_best_fit_match_count": 2,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "edge_feasible",
+        "parse_ok",
+        "higher_is_better",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Equals the live best_fit maximum (14.86). Two live rows, any proposer micro-step away from those weights can miss the SLA."
+    },
+    {
+      "id": "SEC-05",
+      "text": "Average security must be at least 16. If that floor is impossible you may lower the security constraint a little.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 16.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "security"
+      ],
+      "feasibility_class": "minor_relaxation",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "security",
+        "minor_relaxation",
+        "parse_ok",
+        "hitl",
+        "higher_is_better",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Historical max is 15.2, so HITL offers 15.2 x 0.95 ≈ 14.44. Live max 14.86 clears that offer. Higher-is-better analogue of LAT-05."
+    },
+    {
+      "id": "SEC-06",
+      "text": "We require an average security score of at least 20. Security is the only priority.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 20.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "deeply_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "security",
+        "deeply_infeasible",
+        "parse_ok",
+        "hitl",
+        "higher_is_better",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Same HITL offer as SEC-05 (approx. 14.44) against a much more aggressive request. Tests whether the operator treats bound-based offers as honest rather than as 'almost 20'."
+    },
+    {
+      "id": "LC-01",
+      "text": "Average latency under 1000 ms and average cost under 1000. Prefer low latency. Security is a soft preference.",
+      "target_metrics": [
+        "latency",
+        "cost"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 1000.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 235,
+      "live_best_fit_match_count": 18,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "cost",
+        "easy_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Easy two-metric box. Historical matches drop from 812 (latency-only) to 235 once cost <= 1000 is co-constrained, even though each bound is slack on its own."
+    },
+    {
+      "id": "LC-02",
+      "text": "Keep average latency at most 800 ms and average cost at most 700. Optimize latency, security can be ignored.",
+      "target_metrics": [
+        "latency",
+        "cost"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 700.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 26,
+      "live_best_fit_match_count": 2,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "cost",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Both bounds are independently easy, together only 26 historical rows and 2 live rows remain. A feasible pair that already feels scarce."
+    },
+    {
+      "id": "LC-03",
+      "text": "Target average latency <= 650 ms and average cost <= 700. Latency is primary. If needed, relax cost first, then latency.",
+      "target_metrics": [
+        "latency",
+        "cost"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 650.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 700.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "latency"
+      ],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 10,
+      "live_best_fit_match_count": 1,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "cost",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "One live best_fit row. Explicit relaxation_order is present even though HITL should not fire: useful if search later fails and Recalibrator needs a tie-break."
+    },
+    {
+      "id": "LC-04",
+      "text": "Average latency must stay under 900ms and average cost must stay under 450. Prefer low latency. If needed, relax cost first, then latency.",
+      "target_metrics": [
+        "latency",
+        "cost"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 900.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 450.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "latency"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "conditional_best": {
+        "given_latency_le_900_best_cost": 601.034,
+        "given_cost_le_450_best_latency_ms": 914.679
+      },
+      "tags": [
+        "pair",
+        "latency",
+        "cost",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "operator_help",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Pareto hole: 900 ms and cost 450 each exist, never together. HITL should offer two conditional relaxations (cost toward approx. 631, or latency toward approx. 960)."
+    },
+    {
+      "id": "LC-05",
+      "text": "We want average latency under 800 ms while keeping average cost under 600. Prefer low cost if both cannot hold, you may relax latency second.",
+      "target_metrics": [
+        "latency",
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 600.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "latency"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "conditional_best": {
+        "given_cost_le_600_best_latency_ms": 914.679,
+        "given_latency_le_900_best_cost": 601.034
+      },
+      "tags": [
+        "pair",
+        "latency",
+        "cost",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Tighter latency/cost box than LC-04, still a pure joint hole. Primary is cost rather than latency, so after a HITL relax the proposer ranking should flip.",
+      "parser_note": "'relax latency second' implies cost is first, both are hard constraints so both are listed."
+    },
+    {
+      "id": "LS-01",
+      "text": "Average latency below 1000 ms and average security at least 8. Optimize latency. Cost is a soft preference.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 619,
+      "live_best_fit_match_count": 37,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "easy_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Easy latency+security box. Opposite trade-off from LC-01: adding security >= 8 to latency <= 1000 only cuts 812 to 619, so the low-latency tail is mostly already secure enough."
+    },
+    {
+      "id": "LS-02",
+      "text": "Hold average latency to 800 ms or less and average security to 14 or more. Prefer high security.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 194,
+      "live_best_fit_match_count": 16,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "High security with a still-reasonable latency cap is jointly feasible (best latency given security 14 is approx.603 ms). Contrast with LS-04 at 550 ms."
+    },
+    {
+      "id": "LS-03",
+      "text": "Time-sensitive and reasonably isolated: average latency under 550 ms, average security at least 8. Latency is primary.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 23,
+      "live_best_fit_match_count": 2,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "550 ms is tight, security 8 is not. Jointly feasible on live (2 rows). The next step up in security (LS-04) falls off the front."
+    },
+    {
+      "id": "LS-04",
+      "text": "Average latency must stay under 550 ms and average security must stay at least 14. Prefer low latency. If needed, relax security first.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "security"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "conditional_best": {
+        "given_latency_le_550_best_security": 12.68,
+        "given_security_ge_14_best_latency_ms": 602.543
+      },
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Each bound is independently easy-ish, together they never co-occur. Conditional offers: security down to approx.12.05, or latency up to approx.633 ms.",
+      "parser_note": "Text says 'relax security first' and never names latency as relaxable, so only security is listed."
+    },
+    {
+      "id": "LS-05",
+      "text": "Keep average latency under 700 ms with average security at least 12. Optimize security, cost is secondary.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 700.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 12.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 187,
+      "live_best_fit_match_count": 17,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Interior of the latency-security front: feasible with a healthy live match count. Good control for LS-04."
+    },
+    {
+      "id": "CS-01",
+      "text": "Average cost at most 800 and average security at least 14. Maximize security. Latency is a soft preference.",
+      "target_metrics": [
+        "cost",
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 120,
+      "live_best_fit_match_count": 12,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "cost",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "High security is compatible with a moderate cost cap (best security given cost 500 is only 11.5, but 800 still reaches 14). Shows the cost-security elbow."
+    },
+    {
+      "id": "CS-02",
+      "text": "Budget 450 cost units per app on average, and keep average security at least 8. Prefer low cost.",
+      "target_metrics": [
+        "cost",
+        "security"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 450.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 37,
+      "live_best_fit_match_count": 4,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "cost",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Cheap + modest security still co-exist (20 rows even at cost 400). Contrast with CS-03, where security 10 at cost 400 is a hole of a few units."
+    },
+    {
+      "id": "CS-03",
+      "text": "Average cost must stay under 400 and average security must be at least 10. Prefer low cost. If needed, relax security first, then cost.",
+      "target_metrics": [
+        "cost",
+        "security"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 400.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 10.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "security",
+        "cost"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "conditional_best": {
+        "given_cost_le_400_best_security": 9.92,
+        "given_security_ge_10_best_cost": 410.444
+      },
+      "tags": [
+        "pair",
+        "cost",
+        "security",
+        "jointly_infeasible",
+        "minor_relaxation",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Smallest Pareto gap in the catalog: security 9.92 vs requested 10, or cost 410 vs requested 400. Joint infeasibility that is feasible after a truly minor relaxation of either axis."
+    },
+    {
+      "id": "CS-04",
+      "text": "Keep average cost under 500 and average security at least 12. Security is primary. Relax cost first if the pair is impossible.",
+      "target_metrics": [
+        "cost",
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 500.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 12.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "pair",
+        "cost",
+        "security",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Cheapest run with security >= 12 sits well above 500. A wider joint hole than CS-03, still independently feasible on each metric.",
+      "parser_note": "Text only authorizes relaxing cost."
+    },
+    {
+      "id": "CS-05",
+      "text": "Average cost no more than 400 and average security at least 8. Minimize cost.",
+      "target_metrics": [
+        "cost",
+        "security"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 400.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 20,
+      "live_best_fit_match_count": 2,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "cost",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Control for CS-03: drop security from 10 to 8 and the same cost cap becomes jointly feasible (20 / 2). Isolates the Pareto edge."
+    },
+    {
+      "id": "LCS-01",
+      "text": "Average latency under 1200 ms, average cost under 1200, average security at least 6. Prefer balanced placements, with latency as the primary objective.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1200.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 1200.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 6.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 460,
+      "live_best_fit_match_count": 37,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "easy_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Slack three-metric box. Parser must extract three hard constraints with mixed operators. Search should still be a first-try success."
+    },
+    {
+      "id": "LCS-02",
+      "text": "Meet all three: latency <= 1000 ms, cost <= 1000, security >= 8. Optimize latency. If needed, relax cost, then security, then latency.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "security",
+        "latency"
+      ],
+      "feasibility_class": "tight_feasible",
+      "historical_match_count": 93,
+      "live_best_fit_match_count": 8,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "tight_feasible",
+        "parse_ok",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Same latency/cost box as LC-01 plus security >= 8. Matches fall from 235 to 93: the third constraint is binding once cost is already in the picture. Checks that the parser extracts three mixed-operator SLAs."
+    },
+    {
+      "id": "LCS-03",
+      "text": "Latency at most 900 ms, cost at most 800, security at least 8. Prefer low latency.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 900.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 13,
+      "live_best_fit_match_count": 1,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "One live best_fit row. A feasible triple sitting on the interior elbow (the single historical point near cost 788 / sec 10.3 / lat 721 is the spirit of this box)."
+    },
+    {
+      "id": "LCS-04",
+      "text": "Average latency under 1000 ms, average cost under 500, average security at least 8. Cost is the primary objective.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 500.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 8,
+      "live_best_fit_match_count": 1,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Cost-tight triple that live still meets once. Binding constraint is cost, latency 1000 is almost slack given cost 500 (cheapest secure-enough runs are slow)."
+    },
+    {
+      "id": "LCS-05",
+      "text": "Latency <= 1000 ms, cost <= 600, security >= 12. Prefer high security. Relax cost first if the triple cannot be met.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 600.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 12.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost"
+      ],
+      "feasibility_class": "edge_feasible",
+      "historical_match_count": 3,
+      "live_best_fit_match_count": 1,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "edge_feasible",
+        "parse_ok",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Three historical rows, one live. Security-heavy triple with a cost cap that still just closes. Good candidate for showing requested-vs-delivered bars on all three axes.",
+      "parser_note": "Text only authorizes relaxing cost."
+    },
+    {
+      "id": "LCS-06",
+      "text": "All three at once: latency under 550 ms, cost under 800, security at least 8. Prefer low latency. If needed, relax cost, then security, then latency.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "security",
+        "latency"
+      ],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Pairwise, latency 550 + cost 800 is feasible (25 rows) and latency 550 + security 8 is feasible (23), but the triple is empty. HITL must reason about a 3-way hole, not a single-metric bound."
+    },
+    {
+      "id": "LCS-07",
+      "text": "Require latency under 400 ms, cost under 200, and security at least 20. Optimize all three, if stuck, relax cost first, then security, then latency.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 400.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 200.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 20.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "cost",
+        "security",
+        "latency"
+      ],
+      "feasibility_class": "deeply_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "deeply_infeasible",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Every axis is independently beyond its bound. Independent 5% offers (approx.534 ms, approx.322 cost, approx.14.44 security) still do not form a jointly feasible box, because cheap and fast never co-occur. Relaxing one metric at a time cannot recover a 3-way utopia."
+    },
+    {
+      "id": "GAP-01",
+      "text": "Average latency must stay under 520 ms. Optimize latency. Cost and security are secondary.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 520.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "historical_optimistic",
+      "historical_match_count": 7,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "latency",
+        "historical_optimistic",
+        "parse_ok",
+        "live_gap",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Feasibility will proceed (7 historical rows, best 508 ms). Live best is 520.266 ms, so the verifier should fail. Recalibrator cannot salvage it: the text never put latency in relaxation_order. Tests warm-start optimism plus missing in-loop authorization."
+    },
+    {
+      "id": "GAP-02",
+      "text": "Hold average cost to 320 or less. Minimize cost.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 320.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "historical_optimistic",
+      "historical_match_count": 6,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "cost",
+        "historical_optimistic",
+        "parse_ok",
+        "live_gap",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "History has 6 runs at cost <= 320 (best 306.5). Live best is 328.9. No HITL pause, and Recalibrator cannot loosen cost because the text never authorized relaxation_order. Likely max-iteration failure."
+    },
+    {
+      "id": "GAP-03",
+      "text": "Average security must be at least 15. Maximize security. Latency and cost are secondary.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 15.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "historical_optimistic",
+      "historical_match_count": 26,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "historical_optimistic",
+        "parse_ok",
+        "live_gap",
+        "higher_is_better",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "26 historical rows reach 15.0, live max is 14.86. The pre-check will not ask the operator, which is exactly the retrieval-mismatch story."
+    },
+    {
+      "id": "GAP-04",
+      "text": "Average latency under 550 ms and average security at least 12. Prefer low latency.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 12.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "historical_optimistic",
+      "historical_match_count": 6,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": false,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "historical_optimistic",
+        "parse_ok",
+        "live_gap",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Pairwise analogue of GAP-01: 6 historical co-occurrences, zero on live. LS-03 (security 8 at the same latency) is live-feasible, this one is not."
+    },
+    {
+      "id": "GAP-05",
+      "text": "Latency at most 800 ms, cost at most 800, security at least 10. Optimize latency.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 800.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 10.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "historical_optimistic",
+      "historical_match_count": 1,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": false,
+      "tags": [
+        "triple",
+        "latency",
+        "cost",
+        "security",
+        "historical_optimistic",
+        "parse_ok",
+        "live_gap",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "A single historical row (seed 200, w≈0.5/0.2/0.3, about cost 788 / sec 10.34 / lat 721) makes the pre-check green. Live has no such compromise point. Strongest triple-metric retrieval-mismatch case."
+    },
+    {
+      "id": "POL-01",
+      "text": "We are time-sensitive. Average latency must never exceed 500ms. Cost and security are secondary.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 500.0
+        }
+      ],
+      "expected_non_relaxable": [
+        "latency"
+      ],
+      "expected_relaxation_order": [],
+      "feasibility_class": "minor_relaxation",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "recommended_max_iterations": 8,
+      "tags": [
+        "single",
+        "latency",
+        "minor_relaxation",
+        "parse_ok",
+        "hitl",
+        "operator_help",
+        "policy",
+        "non_relaxable"
+      ],
+      "thesis_insight": "Same SLA as LAT-05, but 'never' should hide the Relax button. Continue-anyway cannot loosen the threshold, loop should die on max iterations. Isolates policy from feasibility."
+    },
+    {
+      "id": "POL-02",
+      "text": "This involves self-driving vehicles so latency should never exceed 550ms. Security must never drop below 14. Keep cost as low as possible.",
+      "target_metrics": [
+        "latency",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 550.0
+        },
+        {
+          "metric": "security",
+          "operator": ">=",
+          "threshold": 14.0
+        }
+      ],
+      "expected_non_relaxable": [
+        "latency",
+        "security"
+      ],
+      "expected_relaxation_order": [],
+      "feasibility_class": "jointly_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "recommended_max_iterations": 8,
+      "tags": [
+        "pair",
+        "latency",
+        "security",
+        "jointly_infeasible",
+        "parse_ok",
+        "hitl",
+        "operator_help",
+        "policy",
+        "dual_non_relaxable"
+      ],
+      "thesis_insight": "Same numeric pair as LS-04, both non-relaxable. No Relax option. Continue dies at max iterations. New intent is the only way out. Domain wrapping plus dual 'never'."
+    },
+    {
+      "id": "POL-03",
+      "text": "Optimize for low latency. Average latency should stay under 500ms. If that is not possible you may relax.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 500.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [
+        "latency"
+      ],
+      "feasibility_class": "minor_relaxation",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "recommended_max_iterations": 8,
+      "tags": [
+        "single",
+        "latency",
+        "minor_relaxation",
+        "in_loop",
+        "parse_ok",
+        "hitl",
+        "operator_help",
+        "policy",
+        "hitl_relaxable",
+        "in_loop_authorized"
+      ],
+      "thesis_insight": "Choose Continue at HITL. After three distinct failed weights Recalibrator may loosen 500 toward the empirical best. Needs max_iterations 7–8. Complements LAT-05 (accept offer immediately)."
+    },
+    {
+      "id": "POL-04",
+      "text": "Average latency must never exceed 500 ms. If a solution is infeasible you may relax the latency constraint.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 500.0
+        }
+      ],
+      "expected_non_relaxable": [
+        "latency"
+      ],
+      "expected_relaxation_order": [
+        "latency"
+      ],
+      "feasibility_class": "minor_relaxation",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "latency",
+        "minor_relaxation",
+        "parse_ok",
+        "hitl",
+        "policy",
+        "non_relaxable",
+        "conflicting_policy"
+      ],
+      "thesis_insight": "Parser stress: 'never' vs 'you may relax' in one sentence. Code should keep latency non-relaxable if 'never' wins, which is the conservative safety reading. Record whatever the parser emits, the conflict is the finding.",
+      "parser_note": "Conflicting cues: 'never' -> non_relaxable, 'you may relax' -> relaxation_order. Recalibrator still blocks because non_relaxable wins."
+    },
+    {
+      "id": "POL-05",
+      "text": "Average cost must never exceed 300. Latency and security are secondary.",
+      "target_metrics": [
+        "cost"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "cost",
+          "operator": "<=",
+          "threshold": 300.0
+        }
+      ],
+      "expected_non_relaxable": [
+        "cost"
+      ],
+      "expected_relaxation_order": [],
+      "feasibility_class": "relaxation_insufficient_for_live",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "recommended_max_iterations": 8,
+      "tags": [
+        "single",
+        "cost",
+        "relaxation_insufficient_for_live",
+        "parse_ok",
+        "hitl",
+        "policy",
+        "non_relaxable"
+      ],
+      "thesis_insight": "COST-05 plus non-relaxable. Even if the operator could accept approx. 322, that offer is hidden, and live cannot meet 300 anyway. Hard infeasibility with no legal escape except a new intent."
+    },
+    {
+      "id": "PREF-01",
+      "text": "Optimize for low latency. Keep cost reasonably low and security reasonably high.",
+      "target_metrics": [
+        "latency",
+        "cost",
+        "security"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "unconstrained",
+      "historical_match_count": 1320,
+      "live_best_fit_match_count": 66,
+      "needs_hitl": false,
+      "tags": [
+        "triple_mentioned",
+        "latency",
+        "unconstrained",
+        "soft_only",
+        "parse_ok"
+      ],
+      "thesis_insight": "No hard SLA, so Feasibility always proceeds. Proposer ranks the full history by latency. Mentions all three metrics but only latency is the objective: tests soft_preferences vs empty hard_constraints."
+    },
+    {
+      "id": "PREF-02",
+      "text": "Minimize cost. Average latency must stay under 1000ms. Security should stay reasonably high.",
+      "target_metrics": [
+        "cost",
+        "latency"
+      ],
+      "primary_objective": "cost",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 1000.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 812,
+      "live_best_fit_match_count": 49,
+      "needs_hitl": false,
+      "tags": [
+        "pair_mentioned",
+        "cost",
+        "latency",
+        "easy_feasible",
+        "primary_mismatch",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Primary objective is not the constrained metric. Warm-start filters on latency then ranks by cost. Checks that the agent does not treat 'minimize cost' as a hidden cost <= ? SLA."
+    },
+    {
+      "id": "PREF-03",
+      "text": "Maximize security. Cost does not matter at all and may be sacrificed. There is no numeric SLA.",
+      "target_metrics": [
+        "security"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "unconstrained",
+      "historical_match_count": 1320,
+      "live_best_fit_match_count": 66,
+      "needs_hitl": false,
+      "tags": [
+        "single",
+        "security",
+        "unconstrained",
+        "soft_only",
+        "parse_ok",
+        "higher_is_better"
+      ],
+      "thesis_insight": "Unconstrained higher-is-better ranking. Historical best security is 15.2 at cost approx. 803 / latency approx. 943, the run should walk toward that corner rather than a balanced interior point."
+    },
+    {
+      "id": "PAR-01",
+      "text": "Keep average bananas at least 8. Prefer low apples. Watermelons can be sacrificed first if needed.",
+      "target_metrics": [],
+      "primary_objective": null,
+      "hard_constraints": [],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "parser_unresolved",
+      "historical_match_count": null,
+      "live_best_fit_match_count": null,
+      "needs_hitl": true,
+      "tags": [
+        "parser_unresolved",
+        "unrecognized_metrics",
+        "operator_help"
+      ],
+      "thesis_insight": "parse_is_checked fails because no known metric is named. UI must ask for a rewrite. No analytics JSON is written for parse failures."
+    },
+    {
+      "id": "PAR-02",
+      "text": "Keep average response time under 700 ms and keep the price under 800. Isolation should stay high.",
+      "target_metrics": [],
+      "primary_objective": null,
+      "hard_constraints": [],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "parser_unresolved",
+      "historical_match_count": null,
+      "live_best_fit_match_count": null,
+      "needs_hitl": true,
+      "tags": [
+        "parser_unresolved",
+        "synonym"
+      ],
+      "thesis_insight": "Operator jargon (response time / price / isolation) never mentions latency, cost, or security by name. Same guard as PAR-01, more realistic wording. Measures whether the rewrite UX is necessary in IBN language."
+    },
+    {
+      "id": "PAR-03",
+      "text": "Make it fast, cheap, and safe.",
+      "target_metrics": [],
+      "primary_objective": null,
+      "hard_constraints": [],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "parser_unresolved",
+      "historical_match_count": null,
+      "live_best_fit_match_count": null,
+      "needs_hitl": true,
+      "tags": [
+        "parser_unresolved",
+        "underspecified"
+      ],
+      "thesis_insight": "Adjectives without metric names. The parser may guess, but parse_is_checked should reject the guess. Underspecification vs synonym (PAR-02)."
+    },
+    {
+      "id": "PAR-04",
+      "text": "Keep average security under 8. Prefer low latency.",
+      "target_metrics": [
+        "security",
+        "latency"
+      ],
+      "primary_objective": "security",
+      "hard_constraints": [
+        {
+          "metric": "security",
+          "operator": "<=",
+          "threshold": 8.0
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "easy_feasible",
+      "historical_match_count": 244,
+      "live_best_fit_match_count": 13,
+      "needs_hitl": false,
+      "tags": [
+        "pair_mentioned",
+        "security",
+        "latency",
+        "wrong_operator",
+        "parse_ok",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Linguistic trap: security is higher-is-better, but the operator said 'under 8'. If the parser faithfully emits <= 8, the SLA is easy and semantically inverted. A finding about inverse-translator fidelity, not placement quality."
+    },
+    {
+      "id": "PAR-05",
+      "text": "Normalized latency must stay under 0.3. Optimize latency.",
+      "target_metrics": [
+        "latency"
+      ],
+      "primary_objective": "latency",
+      "hard_constraints": [
+        {
+          "metric": "latency",
+          "operator": "<=",
+          "threshold": 0.3
+        }
+      ],
+      "expected_non_relaxable": [],
+      "expected_relaxation_order": [],
+      "feasibility_class": "deeply_infeasible",
+      "historical_match_count": 0,
+      "live_best_fit_match_count": 0,
+      "needs_hitl": true,
+      "tags": [
+        "single",
+        "latency",
+        "deeply_infeasible",
+        "unit_confusion",
+        "parse_ok",
+        "hitl",
+        "hitl_relaxable"
+      ],
+      "thesis_insight": "Operator spoke in heuristic units. Parser and verifier use avg_latency in milliseconds, so 0.3 ms is absurd. Documents why the architecture refuses to remap operator text onto norm_* scores."
+    }
+  ]
+}
