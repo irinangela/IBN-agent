@@ -77,6 +77,7 @@ graph TD
  ┃ ┣━ proposer.py          # Warm-start + micro-adjust weights
  ┃ ┣━ feasibility.py       # Deterministic historical pre-check + HITL apply
  ┃ ┣━ recalibrator.py      # Search + graduated threshold relaxation
+ ┃ ┣━ simulator.py         # Invoke the placement tool and store results
  ┃ ┣━ schemas.py           # MetricType, IntentSchema, unit labels
  ┃ ┣━ verifier.py          # Deterministic SLA checks
  ┃ ┗━ weights.py           # Clip + normalization

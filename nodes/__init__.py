@@ -3,6 +3,7 @@
         intent_parser_node,
         weight_proposer_node,
         feasibility_node,
+        simulator_node,
         verifier_node,
         recalibrator_node
     and helper functions.
@@ -11,6 +12,7 @@
 from nodes.parser import intent_parser_node, get_relaxation_order
 from nodes.proposer import weight_proposer_node
 from nodes.feasibility import feasibility_node, apply_operator_decision
+from nodes.simulator import simulator_node
 from nodes.verifier import verifier_node
 from nodes.recalibrator import (
     recalibrator_node,
@@ -42,6 +44,7 @@ __all__ = [
     "weight_proposer_node",
     "feasibility_node",
     "apply_operator_decision",
+    "simulator_node",
     "verifier_node",
     "recalibrator_node",
     "apply_constraint_relaxation",
