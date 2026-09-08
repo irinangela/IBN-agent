@@ -146,7 +146,10 @@ class ThesisRolloutAllocatorV2(RolloutAllocatorV2):
         super().__init__(topo, max_branching=max_branching)
 
     def solve(self, apps: List):
-        with concurrent.futures.ThreadPoolExecutor(
+        # ProcessPoolExecutor, not threads: evaluate_batch_thesis mutates topo.machines
+        # and the app in place and reverts afterwards, so parallel workers must each get
+        # their own pickled copy. Threads share those objects and race.
+        with concurrent.futures.ProcessPoolExecutor(
             max_workers=cfg.MAX_WORKERS,
             initializer=init_rollout_worker,
             initargs=(self._w1, self._w2, self._w3),
