@@ -20,14 +20,21 @@ import time
 from typing import Any, Dict, List, Tuple
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-if THIS_DIR not in sys.path:
-    sys.path.insert(0, THIS_DIR)
+ROOT = os.path.dirname(THIS_DIR)
+for _p in (ROOT, THIS_DIR):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import numpy as np
 
-import config as cfg
+# Import config the same way heuristics.py / greedy_fast.py / generator.py do.
+# `import config` would load config.py a SECOND time under the name "config"
+# (simulation/ has no __init__.py, so it is a namespace package and the two names
+# do not share a module object). The weight sweep would then write W1/W2/W3 to a
+# module the allocators never read.
+from simulation import config as cfg
 
-# Ensure local modules resolve config from this folder.
+# Alias so a worker-side bare `import config` resolves to this same object.
 sys.modules["config"] = cfg
 
 import generator
