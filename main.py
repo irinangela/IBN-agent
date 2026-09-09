@@ -7,6 +7,25 @@ from app import parse_app, search_app
 from nodes.feasibility import apply_operator_decision
 from utils.analytics import save_run_analytics
 
+DEMO_PRESETS = {
+    "Latency": (
+        "Optimize for low latency. Average latency must stay under 1000ms. "
+        "Cost and security are secondary."
+    ),
+    "Cost": (
+        "Minimize average cost. Keep cost at or below 700. "
+        "Latency and security are secondary."
+    ),
+    "Security": (
+        "Keep average security at least 8. Prefer low latency. "
+        "Cost can be sacrificed first if needed."
+    ),
+}
+
+
+def _load_demo_preset(name: str) -> None:
+    st.session_state.intent_text = DEMO_PRESETS[name]
+
 
 def _initial_state(user_intent: str, max_iterations: int) -> dict:
     return {
@@ -138,6 +157,19 @@ def _show_done_banner() -> None:
 
 def main():
     st.set_page_config(page_title="Intent-Based Optimization Agent", layout="wide")
+    
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] {
+                min-width: 320px;
+                max-width: 320px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.title("Agentic Intent-Based Network Optimizer")
     st.markdown(
         "Translates natural language into mathematical weights for edge-cloud placement."
@@ -154,14 +186,30 @@ def main():
             "Max Iterations", min_value=1, max_value=10, value=5
         )
         st.markdown("---")
+        st.subheader("Demo presets")
+        st.caption(
+            "Loads an example intent into the box. You can still edit it."
+        )
+        columns = st.columns(3)
+        for column, name in zip(columns, ("Latency", "Cost", "Security")):
+            column.button(
+                name,
+                on_click=_load_demo_preset,
+                args=(name,),
+                use_container_width=True,
+            )
+        st.markdown("---")
         st.info(
             "The agent will autonomously navigate multiple weight combinations "
             "to satisfy your constraints, negotiate trade-offs and find optimal solutions."
         )
 
+    if "intent_text" not in st.session_state:
+        st.session_state.intent_text = DEMO_PRESETS["Latency"]
+
     user_intent = st.text_area(
         "Enter your network intent:",
-        value="Optimize for low latency. Average latency must stay under 1000ms. Cost and security are secondary.",
+        key="intent_text",
         height=100,
     )
 

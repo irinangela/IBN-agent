@@ -18,7 +18,7 @@ Optimize for low latency. Average latency must stay under 1000ms. Cost and secur
 
 **What it shows:** First Parser, then Feasibility proceeds with `best_fit` (no operator pause). Proposer lists historical weights with no WARNING so one (the first and last) simulation takes place. Verifier returns **SUCCESS**.
 
-(This is the default in the UI. 1000 ms is well above both historical floors, so history already contains matching runs.)
+(This is the **Latency** sidebar preset. 1000 ms is well above both historical floors, so history already contains matching runs. Use the Cost and Security presets for the other two easy-feasible demos.)
 
 ### 2. Unrecognised intent
 
