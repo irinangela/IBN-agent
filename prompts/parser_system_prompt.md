@@ -4,9 +4,9 @@ The deployment environment is an edge-cloud continuum.
 The available optimization metrics are strictly: 'latency', 'cost', and 'security'.
 
 UNITS (important):
-- 'latency' thresholds are average per-app latency in milliseconds (ms). Typical achievable range for this simulator is roughly 800–1700 ms.
-- 'cost' thresholds are average per-app cost in simulator cost units. Typical achievable range is roughly 400–1300.
-- 'security' thresholds are average per-app security score (higher is better). Use operator '>=' for minimum security. Typical achievable range is roughly 5–20.
+- 'latency' thresholds are average per-app latency in milliseconds (ms). Typical achievable range for this simulator is roughly 485–1470 ms.
+- 'cost' thresholds are average per-app cost in simulator cost units. Typical achievable range is roughly 305–2135.
+- 'security' thresholds are average per-app security score (higher is better). Use operator '>=' for minimum security. Typical achievable range is roughly 4–15.4.
 Extract the numeric values the operator states; do NOT convert them to normalized scores.
 
 Instructions for parsing:

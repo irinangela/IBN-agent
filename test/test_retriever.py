@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from simulation.config import WARM_START_MODE, WARM_START_SEEDS, SEED
 from utils.retriever import (
     apply_hard_constraints,
+    algorithm_runtime_note,
     average_by_weight,
     best_known_bounds,
     constraint_violates_bound,
@@ -176,7 +177,25 @@ def test_feasibility_report_impossible_sla_needs_operator():
         item for item in report["suggested_relaxations"] if item["metric"] == "latency"
     )
     assert latency_offer["relaxable"] is True
-    assert latency_offer.get("given") == []
+    options = {
+        opt["algorithm"]: opt for opt in latency_offer.get("options") or []
+    }
+    assert set(options) == {"best_fit", "app_rollout"}
+    bf_bound = report["per_algorithm"]["best_fit"]["bounds"]["latency"]
+    ar_bound = report["per_algorithm"]["app_rollout"]["bounds"]["latency"]
+    assert options["best_fit"]["offered"] == pytest.approx(
+        round(suggested_relaxation("latency", bf_bound), 3)
+    )
+    assert options["app_rollout"]["offered"] == pytest.approx(
+        round(suggested_relaxation("latency", ar_bound), 3)
+    )
+    assert options["app_rollout"]["offered"] < options["best_fit"]["offered"]
+    assert options["best_fit"]["runtime_note"] == algorithm_runtime_note("best_fit")
+    assert options["app_rollout"]["runtime_note"] == algorithm_runtime_note(
+        "app_rollout"
+    )
+    assert options["best_fit"]["given"] == []
+    assert options["app_rollout"]["given"] == []
 
 
 def test_feasibility_report_easy_sla_stays_on_best_fit():
@@ -215,50 +234,50 @@ def test_feasibility_report_auto_switches_when_only_rollout_is_jointly_feasible(
     assert report["per_algorithm"]["app_rollout"]["jointly_feasible"] is True
 
 
-def _conditional_best(metric: str, others: list) -> float:
-    values = []
-    for algorithm in ("best_fit", "app_rollout"):
-        filtered = apply_hard_constraints(filter_runs(algorithm=algorithm), others)
-        bound = best_known_bounds(filtered).get(metric)
-        if bound is not None:
-            values.append(float(bound))
-    assert values, f"No best-known bound for {metric} given {others}"
-    if metric == "security":
-        return max(values)
-    return min(values)
+def _algorithm_conditional_best(metric: str, others: list, algorithm: str):
+    filtered = apply_hard_constraints(filter_runs(algorithm=algorithm), others)
+    bound = best_known_bounds(filtered).get(metric)
+    return float(bound) if bound is not None else None
 
 
 def test_feasibility_report_offers_conditional_relaxations():
     """Independently feasible SLAs that never co-occur still get numeric offers."""
 
-    latency_c = {"metric": "latency", "operator": "<=", "threshold": 900.0}
-    cost_c = {"metric": "cost", "operator": "<=", "threshold": 450.0}
+    latency_c = {"metric": "latency", "operator": "<=", "threshold": 700.0}
+    cost_c = {"metric": "cost", "operator": "<=", "threshold": 400.0}
     report = feasibility_report({
         "primary_objective": "latency",
         "hard_constraints": [latency_c, cost_c],
         "non_relaxable_constraints": [],
     })
-    if not report["needs_operator"]:
-        pytest.skip("No best-known bound for latency or cost given the constraints")
+    assert report["needs_operator"] is True
 
     by_metric = {item["metric"]: item for item in report["suggested_relaxations"]}
     assert "latency" in by_metric
     assert "cost" in by_metric
-
-    expected_lat = suggested_relaxation(
-        "latency", _conditional_best("latency", [cost_c])
-    )
-    expected_cost = suggested_relaxation(
-        "cost", _conditional_best("cost", [latency_c])
-    )
-    assert by_metric["latency"]["offered"] == pytest.approx(round(expected_lat, 3))
-    assert by_metric["cost"]["offered"] == pytest.approx(round(expected_cost, 3))
-    assert by_metric["latency"]["offered"] > 900.0
-    assert by_metric["cost"]["offered"] > 450.0
     assert by_metric["latency"]["relaxable"] is True
     assert by_metric["cost"]["relaxable"] is True
-    assert any("cost" in label for label in by_metric["latency"]["given"])
-    assert any("latency" in label for label in by_metric["cost"]["given"])
+
+    lat_options = by_metric["latency"].get("options") or []
+    cost_options = by_metric["cost"].get("options") or []
+    assert lat_options
+    assert cost_options
+
+    others = {"latency": [cost_c], "cost": [latency_c]}
+    requested = {"latency": 700.0, "cost": 400.0}
+    for metric, options in (("latency", lat_options), ("cost", cost_options)):
+        for opt in options:
+            best = _algorithm_conditional_best(
+                metric, others[metric], opt["algorithm"]
+            )
+            assert best is not None
+            assert opt["offered"] == pytest.approx(
+                round(suggested_relaxation(metric, best), 3)
+            )
+            assert opt["offered"] > requested[metric]
+            assert any(
+                others[metric][0]["metric"] in label for label in opt["given"]
+            )
 
     lat_bounds = [
         info["bounds"]["latency"]
@@ -267,8 +286,8 @@ def test_feasibility_report_offers_conditional_relaxations():
     ]
     assert lat_bounds
     indep_lat = min(lat_bounds)
-    assert indep_lat <= 900.0
-    assert by_metric["latency"]["offered"] > indep_lat
+    assert indep_lat <= 700.0
+    assert min(opt["offered"] for opt in lat_options) > indep_lat
 
 
 def test_feasibility_report_falls_back_when_other_constraints_match_nothing():
@@ -284,21 +303,23 @@ def test_feasibility_report_falls_back_when_other_constraints_match_nothing():
     by_metric = {item["metric"]: item for item in report["suggested_relaxations"]}
     assert "latency" in by_metric
     assert "cost" in by_metric
-    assert by_metric["latency"]["given"] == []
-    assert by_metric["cost"]["given"] == []
+    for item in by_metric.values():
+        options = item.get("options") or []
+        assert options
+        for opt in options:
+            assert opt["given"] == []
 
 
 def test_feasibility_report_marks_non_relaxable_in_pareto_suggestions():
     report = feasibility_report({
         "primary_objective": "latency",
         "hard_constraints": [
-            {"metric": "latency", "operator": "<=", "threshold": 900.0},
-            {"metric": "cost", "operator": "<=", "threshold": 450.0},
+            {"metric": "latency", "operator": "<=", "threshold": 700.0},
+            {"metric": "cost", "operator": "<=", "threshold": 400.0},
         ],
         "non_relaxable_constraints": ["latency"],
     })
-    if not report["needs_operator"]:
-        pytest.skip("No best-known bound for latency or cost given the constraints")
+    assert report["needs_operator"] is True
     by_metric = {item["metric"]: item for item in report["suggested_relaxations"]}
     assert by_metric["latency"]["relaxable"] is False
     assert by_metric["cost"]["relaxable"] is True

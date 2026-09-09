@@ -190,6 +190,15 @@ def main(argv: Sequence[str] | None = None) -> None:
         action="store_true",
         help="Print the plan and the time estimate, then exit without simulating",
     )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help=(
+            "Drop existing rows for the chosen --algorithms, then regenerate them. "
+            "Other algorithms in the CSV are left untouched. Without this, "
+            "resume skips rows that already exist for those algorithms."
+        ),
+    )
     args = parser.parse_args(argv)
 
     seeds = _parse_seeds(args.seeds)
@@ -204,6 +213,19 @@ def main(argv: Sequence[str] | None = None) -> None:
         print("Starting a fresh near-neighbor CSV (legacy rows will not be resumed).")
     else:
         existing, done = _load_done(out_path)
+
+    if args.replace and not existing.empty:
+        keep = existing[~existing["algorithm"].isin(algorithms)].copy()
+        dropped = len(existing) - len(keep)
+        existing = keep
+        done = {
+            _row_key(row.seed, row.W1, row.W2, row.W3, row.algorithm)
+            for row in existing.itertuples(index=False)
+        }
+        print(
+            f"--replace: dropped {dropped} existing row(s) for {algorithms}; "
+            f"kept {len(existing)} other row(s)."
+        )
 
     rows: List[dict] = [] if existing.empty else existing.to_dict("records")
 

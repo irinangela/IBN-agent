@@ -20,14 +20,21 @@ import time
 from typing import Any, Dict, List, Tuple
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-if THIS_DIR not in sys.path:
-    sys.path.insert(0, THIS_DIR)
+ROOT = os.path.dirname(THIS_DIR)
+for _p in (ROOT, THIS_DIR):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import numpy as np
 
-import config as cfg
+# Import config the same way heuristics.py / greedy_fast.py / generator.py do.
+# `import config` would load config.py a SECOND time under the name "config"
+# (simulation/ has no __init__.py, so it is a namespace package and the two names
+# do not share a module object). The weight sweep would then write W1/W2/W3 to a
+# module the allocators never read.
+from simulation import config as cfg
 
-# Ensure local modules resolve config from this folder.
+# Alias so a worker-side bare `import config` resolves to this same object.
 sys.modules["config"] = cfg
 
 import generator
@@ -40,6 +47,32 @@ from heuristics import (
     get_app_raw_metrics,
 )
 from rollout_worker import evaluate_batch_thesis, init_rollout_worker
+
+
+def _in_streamlit() -> bool:
+    """Streamlit's Windows spawn cannot host a ProcessPoolExecutor."""
+    return "streamlit" in sys.modules or bool(os.environ.get("STREAMLIT_SERVER_PORT"))
+
+
+def _rollout_executor(w1: float, w2: float, w3: float):
+    """Process pool on the CLI / threads under Streamlit.
+
+    Isolation is in evaluate_batch_thesis (deepcopy method), not in the executor.
+    Threads without that copy race. Processes without Streamlit work as-is.
+    """
+    kwargs = {
+        "max_workers": cfg.MAX_WORKERS,
+        "initializer": init_rollout_worker,
+        "initargs": (float(w1), float(w2), float(w3)),
+    }
+    if _in_streamlit():
+        print(
+            "  [App-Rollout] Streamlit detected: ThreadPoolExecutor "
+            "+ per-batch deepcopy (same look-ahead as the process pool)",
+            flush=True,
+        )
+        return concurrent.futures.ThreadPoolExecutor(**kwargs)
+    return concurrent.futures.ProcessPoolExecutor(**kwargs)
 
 
 def set_seeds(seed: int) -> None:
@@ -146,11 +179,9 @@ class ThesisRolloutAllocatorV2(RolloutAllocatorV2):
         super().__init__(topo, max_branching=max_branching)
 
     def solve(self, apps: List):
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=cfg.MAX_WORKERS,
-            initializer=init_rollout_worker,
-            initargs=(self._w1, self._w2, self._w3),
-        ) as executor:
+        # CLI: ProcessPoolExecutor (pickle isolation). Streamlit/Windows: threads
+        # plus deepcopy inside evaluate_batch_thesis (spawn would BrokenProcessPool).
+        with _rollout_executor(self._w1, self._w2, self._w3) as executor:
             n_apps = len(apps)
             for app_idx, app in enumerate(apps):
                 app.global_bounds = compute_app_global_bounds(app)
