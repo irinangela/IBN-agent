@@ -49,6 +49,32 @@ from heuristics import (
 from rollout_worker import evaluate_batch_thesis, init_rollout_worker
 
 
+def _in_streamlit() -> bool:
+    """Streamlit's Windows spawn cannot host a ProcessPoolExecutor."""
+    return "streamlit" in sys.modules or bool(os.environ.get("STREAMLIT_SERVER_PORT"))
+
+
+def _rollout_executor(w1: float, w2: float, w3: float):
+    """Process pool on the CLI / threads under Streamlit.
+
+    Isolation is in evaluate_batch_thesis (deepcopy method), not in the executor.
+    Threads without that copy race. Processes without Streamlit work as-is.
+    """
+    kwargs = {
+        "max_workers": cfg.MAX_WORKERS,
+        "initializer": init_rollout_worker,
+        "initargs": (float(w1), float(w2), float(w3)),
+    }
+    if _in_streamlit():
+        print(
+            "  [App-Rollout] Streamlit detected: ThreadPoolExecutor "
+            "+ per-batch deepcopy (same look-ahead as the process pool)",
+            flush=True,
+        )
+        return concurrent.futures.ThreadPoolExecutor(**kwargs)
+    return concurrent.futures.ProcessPoolExecutor(**kwargs)
+
+
 def set_seeds(seed: int) -> None:
     np.random.seed(seed)
     random.seed(seed)
@@ -153,14 +179,9 @@ class ThesisRolloutAllocatorV2(RolloutAllocatorV2):
         super().__init__(topo, max_branching=max_branching)
 
     def solve(self, apps: List):
-        # ProcessPoolExecutor, not threads: evaluate_batch_thesis mutates topo.machines
-        # and the app in place and reverts afterwards, so parallel workers must each get
-        # their own pickled copy. Threads share those objects and race.
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=cfg.MAX_WORKERS,
-            initializer=init_rollout_worker,
-            initargs=(self._w1, self._w2, self._w3),
-        ) as executor:
+        # CLI: ProcessPoolExecutor (pickle isolation). Streamlit/Windows: threads
+        # plus deepcopy inside evaluate_batch_thesis (spawn would BrokenProcessPool).
+        with _rollout_executor(self._w1, self._w2, self._w3) as executor:
             n_apps = len(apps)
             for app_idx, app in enumerate(apps):
                 app.global_bounds = compute_app_global_bounds(app)

@@ -231,15 +231,14 @@ def _conditional_best(metric: str, others: list) -> float:
 def test_feasibility_report_offers_conditional_relaxations():
     """Independently feasible SLAs that never co-occur still get numeric offers."""
 
-    latency_c = {"metric": "latency", "operator": "<=", "threshold": 900.0}
-    cost_c = {"metric": "cost", "operator": "<=", "threshold": 450.0}
+    latency_c = {"metric": "latency", "operator": "<=", "threshold": 700.0}
+    cost_c = {"metric": "cost", "operator": "<=", "threshold": 400.0}
     report = feasibility_report({
         "primary_objective": "latency",
         "hard_constraints": [latency_c, cost_c],
         "non_relaxable_constraints": [],
     })
-    if not report["needs_operator"]:
-        pytest.skip("No best-known bound for latency or cost given the constraints")
+    assert report["needs_operator"] is True
 
     by_metric = {item["metric"]: item for item in report["suggested_relaxations"]}
     assert "latency" in by_metric
@@ -253,8 +252,8 @@ def test_feasibility_report_offers_conditional_relaxations():
     )
     assert by_metric["latency"]["offered"] == pytest.approx(round(expected_lat, 3))
     assert by_metric["cost"]["offered"] == pytest.approx(round(expected_cost, 3))
-    assert by_metric["latency"]["offered"] > 900.0
-    assert by_metric["cost"]["offered"] > 450.0
+    assert by_metric["latency"]["offered"] > 700.0
+    assert by_metric["cost"]["offered"] > 400.0
     assert by_metric["latency"]["relaxable"] is True
     assert by_metric["cost"]["relaxable"] is True
     assert any("cost" in label for label in by_metric["latency"]["given"])
@@ -267,7 +266,7 @@ def test_feasibility_report_offers_conditional_relaxations():
     ]
     assert lat_bounds
     indep_lat = min(lat_bounds)
-    assert indep_lat <= 900.0
+    assert indep_lat <= 700.0
     assert by_metric["latency"]["offered"] > indep_lat
 
 
@@ -292,13 +291,12 @@ def test_feasibility_report_marks_non_relaxable_in_pareto_suggestions():
     report = feasibility_report({
         "primary_objective": "latency",
         "hard_constraints": [
-            {"metric": "latency", "operator": "<=", "threshold": 900.0},
-            {"metric": "cost", "operator": "<=", "threshold": 450.0},
+            {"metric": "latency", "operator": "<=", "threshold": 700.0},
+            {"metric": "cost", "operator": "<=", "threshold": 400.0},
         ],
         "non_relaxable_constraints": ["latency"],
     })
-    if not report["needs_operator"]:
-        pytest.skip("No best-known bound for latency or cost given the constraints")
+    assert report["needs_operator"] is True
     by_metric = {item["metric"]: item for item in report["suggested_relaxations"]}
     assert by_metric["latency"]["relaxable"] is False
     assert by_metric["cost"]["relaxable"] is True

@@ -8,6 +8,7 @@ heuristics / greedy_fast import `config`.
 
 from __future__ import annotations
 
+import copy
 import os
 import sys
 
@@ -50,10 +51,24 @@ def _apply_run_weights(w1: float, w2: float, w3: float) -> None:
 def evaluate_batch_thesis(args):
     """
     Worker entry point: apply run weights, then delegate to repo evaluate_batch_v2.
+
+    Deep-copy topo/app before scoring. evaluate_batch_v2 mutates machines and
+    assignments in place.
+
+    ProcessPoolExecutor already pickle-copies, but ThreadPoolExecutor (Streamlit 
+    on Windows) shares the parent's objects. 
+    
+    Copying here keeps both executors on the same look-ahead algorithm.
     """
     topo_master, app_master, ms_index, candidates, use_fast, w1, w2, w3 = args
     _apply_run_weights(w1, w2, w3)
 
     from heuristics import evaluate_batch_v2
 
-    return evaluate_batch_v2((topo_master, app_master, ms_index, candidates, use_fast))
+    return evaluate_batch_v2((
+        copy.deepcopy(topo_master),
+        copy.deepcopy(app_master),
+        ms_index,
+        candidates,
+        use_fast,
+    ))
