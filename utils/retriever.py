@@ -19,6 +19,10 @@ ALGORITHMS = ("best_fit", "app_rollout")
 DEFAULT_ALGORITHM = "best_fit"
 RELAXATION_MARGIN = 0.05
 HIGHER_IS_BETTER = {"security"}
+ALGORITHM_RUNTIME_S = {
+    "best_fit": 0.25,
+    "app_rollout": 45.0,
+}
 
 try:
     raw_df = pd.read_csv(PATH_VALID_RUNS)
@@ -153,34 +157,27 @@ def _constraint_label(constraint: Dict[str, Any]) -> str:
     return f"{metric_name} {operator} {threshold}"
 
 
-def _pick_better(metric: str, values: list[float]) -> Optional[float]:
-    if not values:
-        return None
-    if metric in HIGHER_IS_BETTER:
-        return max(values)
-    return min(values)
+def algorithm_runtime_note(algorithm: str) -> str:
+    """Operator-facing cost of one live simulation on this algorithm."""
+
+    seconds = ALGORITHM_RUNTIME_S.get(algorithm)
+    if seconds is None:
+        return algorithm
+    if seconds < 1.0:
+        return f"fast (~{seconds}s per simulation)"
+    return f"slower (~{int(seconds)}s per simulation)"
 
 
-def _better_bound(metric: str, per_algorithm: Dict[str, Any]) -> Optional[float]:
-    values = []
-    for info in per_algorithm.values():
-        bound = (info.get("bounds") or {}).get(metric)
-        if bound is not None:
-            values.append(float(bound))
-    return _pick_better(metric, values)
-
-
-def _conditional_best(metric: str, others: list, seeds: Sequence[int]) -> Optional[float]:
-    """Best-known value of metric among runs that satisfy the other constraints."""
-
-    values = []
-    for algorithm in ALGORITHMS:
-        runs = filter_runs(algorithm=algorithm, seeds=seeds)
-        filtered = apply_hard_constraints(runs, others)
-        bound = best_known_bounds(filtered).get(metric)
-        if bound is not None:
-            values.append(float(bound))
-    return _pick_better(metric, values)
+def _conditional_best_for_algorithm(
+    metric: str,
+    others: list,
+    seeds: Sequence[int],
+    algorithm: str,
+) -> Optional[float]:
+    runs = filter_runs(algorithm=algorithm, seeds=seeds)
+    filtered = apply_hard_constraints(runs, others)
+    bound = best_known_bounds(filtered).get(metric)
+    return float(bound) if bound is not None else None
 
 
 def _best_observed_lines(
@@ -276,27 +273,41 @@ def feasibility_report(
             others = [
                 other for i, other in enumerate(hard_constraints) if i != index
             ]
-            given = [
+            other_labels = [
                 _constraint_label(other)
                 for other in others
                 if (other.get("metric") or "").lower() in METRIC_COLS
             ]
-            best = _conditional_best(metric_name, others, wanted)
-            if best is None:
-                # fall back to the best-known value of the independent metric
-                best = _better_bound(metric_name, per_algorithm)
-                given = []
-            if best is None:
-                continue
-            if not constraint_violates_bound(constraint, {metric_name: best}):
+            options = []
+            for algorithm in ALGORITHMS:
+                best = _conditional_best_for_algorithm(
+                    metric_name, others, wanted, algorithm
+                )
+                given = list(other_labels)
+                if best is None:
+                    bound = (per_algorithm[algorithm].get("bounds") or {}).get(
+                        metric_name
+                    )
+                    best = float(bound) if bound is not None else None
+                    given = []
+                if best is None:
+                    continue
+                if not constraint_violates_bound(constraint, {metric_name: best}):
+                    continue
+                options.append({
+                    "algorithm": algorithm,
+                    "offered": round(suggested_relaxation(metric_name, best), 3),
+                    "runtime_note": algorithm_runtime_note(algorithm),
+                    "given": given,
+                })
+            if not options:
                 continue
             suggested_relaxations.append({
                 "metric": metric_name,
                 "operator": constraint.get("operator"),
                 "requested": constraint.get("threshold"),
-                "offered": round(suggested_relaxation(metric_name, best), 3),
                 "relaxable": metric_name not in non_relaxable,
-                "given": given,
+                "options": options,
             })
 
     return {

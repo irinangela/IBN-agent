@@ -105,6 +105,52 @@ def test_apply_operator_decision_relax_updates_active_threshold_only():
     assert updated["active_parsed_intent"]["hard_constraints"][0]["threshold"] == 3.9
     assert state["original_parsed_intent"]["hard_constraints"][0]["threshold"] == 2.0
     assert updated["operator_decision"]["action"] == "relax"
+    assert updated["use_rollout"] is False
+
+
+def test_apply_operator_decision_relax_switches_to_chosen_algorithm():
+    original = _intent(
+        hard_constraints=[
+            {"metric": "latency", "operator": "<=", "threshold": 1.0}
+        ],
+        non_relaxable_constraints=[],
+    )
+    state = {
+        "original_parsed_intent": copy.deepcopy(original),
+        "active_parsed_intent": copy.deepcopy(original),
+        "feasibility_report": {
+            "chosen_algorithm": "best_fit",
+            "suggested_relaxations": [
+                {
+                    "metric": "latency",
+                    "operator": "<=",
+                    "requested": 1.0,
+                    "relaxable": True,
+                    "options": [
+                        {
+                            "algorithm": "app_rollout",
+                            "offered": 509.0,
+                            "runtime_note": "slower (~45s per simulation)",
+                            "given": [],
+                        }
+                    ],
+                }
+            ],
+        },
+    }
+    updated = apply_operator_decision(
+        state,
+        {
+            "action": "relax",
+            "thresholds": {"latency": 509.0},
+            "algorithm": "app_rollout",
+        },
+    )
+    assert updated["needs_operator"] is False
+    assert updated["use_rollout"] is True
+    assert updated["active_parsed_intent"]["hard_constraints"][0]["threshold"] == 509.0
+    assert updated["feasibility_report"]["chosen_algorithm"] == "app_rollout"
+    assert "app_rollout" in updated["reasoning"]
 
 
 def test_apply_operator_decision_continue_leaves_thresholds():
@@ -163,3 +209,23 @@ def test_feasibility_node_applies_injected_continue_decision():
     assert result["needs_operator"] is False
     assert result["operator_decision"]["action"] == "continue"
     assert result["active_parsed_intent"]["hard_constraints"][0]["threshold"] == 1.0
+    assert result["use_rollout"] is False
+
+
+def test_feasibility_node_relax_can_switch_to_rollout():
+    result = feasibility_node({
+        "active_parsed_intent": _intent(
+            hard_constraints=[
+                {"metric": "latency", "operator": "<=", "threshold": 1.0}
+            ]
+        ),
+        "operator_decision": {
+            "action": "relax",
+            "thresholds": {"latency": 509.0},
+            "algorithm": "app_rollout",
+        },
+    })
+    assert result["needs_operator"] is False
+    assert result["use_rollout"] is True
+    assert result["active_parsed_intent"]["hard_constraints"][0]["threshold"] == 509.0
+    assert result["operator_decision"]["algorithm"] == "app_rollout"

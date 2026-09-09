@@ -214,34 +214,73 @@ def main():
 
         choice = st.radio("How should the agent proceed?", options)
         thresholds = {}
+        selected_algorithm = None
         revised_intent = None
         if choice.startswith("Relax"):
             st.caption(
-                "Each offer is the best-known value while keeping the other "
-                "constraints, plus a 5% margin. Pick the one constraint you are "
-                "willing to loosen."
+                "Each offer is that algorithm's best-known value, while keeping "
+                "the other constraints, plus a 5% safety margin. Search will run on "
+                "the algorithm you pick. The app_rollout algorithm can usually meet "
+                "a tighter threshold, but each simulation is much slower."
             )
-            labels = []
-            by_label = {}
-            for item in relaxable:
-                given = item.get("given") or []
-                keep = f" — keep {', '.join(given)}" if given else ""
-                label = (
-                    f"{item['metric']}: {item.get('operator')} {item.get('offered')}"
-                    f"{keep}"
+            if len(relaxable) > 1:
+                metric_labels = []
+                by_metric_label = {}
+                for item in relaxable:
+                    label = (
+                        f"{item['metric']}: requested {item.get('operator')} "
+                        f"{item.get('requested')}"
+                    )
+                    metric_labels.append(label)
+                    by_metric_label[label] = item
+                selected_metric = st.radio(
+                    "Which metric are you willing to relax?", metric_labels
                 )
-                labels.append(label)
-                by_label[label] = item
-            selected = st.radio("Which metric are you willing to relax?", labels)
-            item = by_label[selected]
-            thresholds[item["metric"]] = st.number_input(
-                (
-                    f"New {item['metric']} threshold "
-                    f"(requested {item.get('operator')} {item.get('requested')})"
-                ),
-                value=float(item.get("offered") or 0.0),
-                key=f"relax_{item['metric']}",
-            )
+                item = by_metric_label[selected_metric]
+            else:
+                item = relaxable[0]
+
+            algo_options = list(item.get("options") or [])
+            if not algo_options and item.get("offered") is not None:
+                algo_options = [{
+                    "algorithm": "best_fit",
+                    "offered": item["offered"],
+                    "runtime_note": "",
+                    "given": item.get("given") or [],
+                }]
+            option_labels = []
+            by_option_label = {}
+            for opt in algo_options:
+                given = opt.get("given") or []
+                keep = f" — keep {', '.join(given)}" if given else ""
+                note = opt.get("runtime_note") or ""
+                note_txt = f" — {note}" if note else ""
+                label = (
+                    f"{opt.get('algorithm')}: {item.get('operator')} "
+                    f"{opt.get('offered')}{note_txt}{keep}"
+                )
+                option_labels.append(label)
+                by_option_label[label] = opt
+            if not option_labels:
+                st.error("No algorithm-specific offers are available for this metric.")
+            else:
+                selected_option = st.radio(
+                    "Which algorithm threshold do you want to use?",
+                    option_labels,
+                )
+                chosen = by_option_label[selected_option]
+                selected_algorithm = chosen.get("algorithm")
+                thresholds[item["metric"]] = st.number_input(
+                    (
+                        f"New {item['metric']} threshold "
+                        f"(requested {item.get('operator')} {item.get('requested')})"
+                    ),
+                    value=float(chosen.get("offered") or 0.0),
+                    key=(
+                        f"relax_{item['metric']}_"
+                        f"{chosen.get('algorithm') or 'best_fit'}"
+                    ),
+                )
         elif choice.startswith("Enter"):
             revised_intent = st.text_area(
                 "Revised intent",
@@ -263,6 +302,8 @@ def main():
                 decision = {"action": action}
                 if action == "relax":
                     decision["thresholds"] = thresholds
+                    if selected_algorithm:
+                        decision["algorithm"] = selected_algorithm
                 updated = apply_operator_decision(
                     st.session_state.agent_state, decision
                 )

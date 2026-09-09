@@ -2,7 +2,7 @@ import copy
 from typing import Any, Dict
 
 from state import AgentState
-from utils.retriever import feasibility_report
+from utils.retriever import ALGORITHMS, feasibility_report
 
 
 def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
@@ -71,18 +71,28 @@ def apply_operator_decision(
             except (TypeError, ValueError):
                 continue
 
-    use_rollout = report.get("chosen_algorithm") == "app_rollout"
+    chosen = (decision or {}).get("algorithm") or report.get("chosen_algorithm")
+    if chosen not in ALGORITHMS:
+        chosen = "best_fit"
+    use_rollout = chosen == "app_rollout"
     note = f"Operator chose '{action}'."
     if action == "relax":
         note += " Active constraint thresholds were updated."
+        if (decision or {}).get("algorithm") in ALGORITHMS:
+            note += f" Live simulator set to {chosen}."
 
-    return {
+    updates: Dict[str, Any] = {
         "active_parsed_intent": intent,
         "needs_operator": False,
         "use_rollout": use_rollout,
         "operator_decision": decision or {},
         "reasoning": note,
     }
+    if action == "relax" and (decision or {}).get("algorithm") in ALGORITHMS:
+        report = dict(report)
+        report["chosen_algorithm"] = chosen
+        updates["feasibility_report"] = report
+    return updates
 
 
 def feasibility_node(state: AgentState) -> Dict[str, Any]:

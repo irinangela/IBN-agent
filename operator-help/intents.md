@@ -4,7 +4,7 @@
 | Best security (higher) | 15.2 | **15.38** | 14.86 | 14.94 |
 | Best latency (ms, lower) | 508 | **485** | 520 | **492** |
 
-`app_rollout` dominates `best_fit` for almost all rows in the dataset, so feasibility **auto-switches** when `best_fit` cannot meet an SLA and `app_rollout` can. Combined latency floor is **484.9 ms**. HITL only fires if **neither** algorithm is jointly feasible (use **470 ms**). The 5% offer is **509.1 ms** (484.9 × 1.05). That offer is below live `best_fit` (~520 ms), so accepting it still fails unless you raise it toward ~521 ms or force `app_rollout`. The default UI intent (1000 ms) is still an easy success.
+`app_rollout` dominates `best_fit` for almost all rows in the dataset, so feasibility **auto-switches** when `best_fit` cannot meet an SLA and `app_rollout` can. Combined latency floor is **484.9 ms**. HITL only fires if **neither** algorithm is jointly feasible (use **470 ms**). Relax then offers **two** algorithm-tagged thresholds: `best_fit` at about **533.5 ms** (508.1 × 1.05, fast) and `app_rollout` at about **509.1 ms** (484.9 × 1.05, ~45s per simulation). Picking the `app_rollout` offer also switches live search to that algorithm. The default UI intent (1000 ms) is still an easy success.
 
 ---
 
@@ -58,9 +58,12 @@ Optimize for low latency. Average latency must stay under 500ms. Cost and securi
 Optimize for low latency. Average latency must stay under 470ms. Cost and security are secondary.
 ```
 
-**What it shows:** 470 ms is below both historical floors, so operator input is required. The run pauses with three options: `continue anyway`, `relax constraints to offered threshold`, `enter a new intent`. Choose the second option, which offers the best-known value loosened by a small margin (about **509 ms** = 484.9 × 1.05) and the ability to change it before confirming.
+**What it shows:** 470 ms is below both historical floors, so operator input is required. The run pauses with three options: `continue anyway`, `relax constraints to offered thresholds`, `enter a new intent`. Choose the second option. You should see two algorithm-tagged offers:
 
-Live `best_fit` can only do about 520 ms, so **accepting 509 ms as-is will still fail** on `best_fit`. Raise the offered value toward **521 ms** before confirming. You can also choose `Enter a new intent` at the same pause.
+- `best_fit`: about **533.5 ms** (508.1 × 1.05), fast (~0.25s per simulation). Live `best_fit` can do about 520 ms, so this offer should succeed.
+- `app_rollout`: about **509.1 ms** (484.9 × 1.05), slower (~45s per simulation). Live rollout can do about 492 ms, so this tighter offer should also succeed, and search switches to `app_rollout`.
+
+You can still edit the number before confirming. Search keeps the algorithm you selected. You can also choose `Enter a new intent` at the same pause.
 
 ### 7. Joint Pareto infeasibility (two SLAs that never co-occur)
 
@@ -68,7 +71,7 @@ Live `best_fit` can only do about 520 ms, so **accepting 509 ms as-is will still
 Average latency must stay under 700ms and average cost must stay under 400. Prefer low latency. If needed, relax cost first, then latency.
 ```
 
-**What it shows:** Each bound is feasible on its own (latency 700 and cost 400 exist in history), but no stored run has both. HITL still offers: `continue searching anyway`, `relax constraints to offered thresholds` and `enter a new intent`. Choose the second one which offers now two distinct conditional relaxations, one for each metric so that the joint intent becomes feasible. Pick one metric to loosen.
+**What it shows:** Each bound is feasible on its own (latency 700 and cost 400 exist in history), but no stored run has both. HITL still offers: `continue searching anyway`, `relax constraints to offered thresholds` and `enter a new intent`. Choose the second one. Pick one metric to loosen. Each metric then shows algorithm-tagged conditional offers (and the runtime note) so the joint intent becomes feasible on the allocator you select.
 
 ### 8. HITL — continue and in-loop graduated relaxation
 
