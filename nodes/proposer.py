@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from state import AgentState
 from utils.retriever import get_warm_start_context
-from nodes.llm import llm
+from nodes.llm import llm, invoke_structured, structured_usage
 from nodes.weights import clip_and_normalize_weights
 
 
@@ -54,17 +54,24 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     ])
 
     chain = prompt | structured_llm
-    response = chain.invoke({
+    response = invoke_structured(chain, {
         "intent": str(parsed_intent),
         "context": historical_context,
     })
+    result = response.get("parsed")
+    in_tok, out_tok = structured_usage(response)
+    in_tokens = state.get("total_input_tokens", 0) + in_tok
+    out_tokens = state.get("total_output_tokens", 0) + out_tok
 
-    result = response["parsed"]
-    raw_msg = response["raw"]
-
-    usage = getattr(raw_msg, "usage_metadata", {}) or {}
-    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
-    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
+    if result is None:
+        weights = clip_and_normalize_weights(0.333, 0.333, 0.334, 0.333, 0.333, 0.334)
+        return {
+            "historical_context": historical_context,
+            "current_weights": weights,
+            "reasoning": "Structured parse failed. Switched to using balanced weights so search can continue.",
+            "total_input_tokens": in_tokens,
+            "total_output_tokens": out_tokens,
+        }
 
     weights = clip_and_normalize_weights(
         result.w1, result.w2, result.w3,

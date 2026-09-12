@@ -5,7 +5,7 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from nodes import intent_parser_node, get_relaxation_order
-from nodes.parser import parse_is_checked
+from nodes.parser import parse_is_checked, STRUCTURED_PARSE_FAILED_MESSAGE
 
 def test_get_relaxation_order_keeps_only_hard_metrics():
     intent = {
@@ -44,6 +44,27 @@ def test_get_relaxation_order_empties_when_no_overlap():
     }
     updated = get_relaxation_order(intent)
     assert updated["relaxation_order"] == []
+
+
+def test_parser_structured_failure_asks_for_rewrite_instead_of_crashing(monkeypatch):
+    from nodes import parser as parser_mod
+
+    monkeypatch.setattr(
+        parser_mod,
+        "invoke_structured",
+        lambda *args, **kwargs: {"parsed": None, "raw": None},
+    )
+    monkeypatch.setattr(parser_mod, "structured_usage", lambda response: (1, 1))
+    result = intent_parser_node({
+        "user_intent": "We need average latency no worse than 521 ms.",
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+    })
+    assert result["parse_failed"] is True
+    assert result["needs_operator"] is True
+    assert STRUCTURED_PARSE_FAILED_MESSAGE in result["parse_feedback"]
+    assert result["original_parsed_intent"] == {}
+    assert result["total_input_tokens"] == 1
 
 
 @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Anthropic API key not set. Skipping parser tests.")

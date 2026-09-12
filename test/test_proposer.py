@@ -38,3 +38,31 @@ def test_proposer_weights_sum_to_one():
     assert len(result["historical_context"]) > 0 
     
     assert round(total_weight, 3) == 1.0
+
+
+def test_proposer_uses_balanced_weights_when_parse_fails(monkeypatch):
+    from nodes import proposer as proposer_mod
+
+    monkeypatch.setattr(
+        proposer_mod,
+        "get_warm_start_context",
+        lambda *args, **kwargs: "Historical Successful Runs (mean operator units):\n",
+    )
+    monkeypatch.setattr(
+        proposer_mod,
+        "invoke_structured",
+        lambda *args, **kwargs: {"parsed": None, "raw": None},
+    )
+    monkeypatch.setattr(proposer_mod, "structured_usage", lambda response: (2, 3))
+    result = weight_proposer_node({
+        "active_parsed_intent": {
+            "primary_objective": "latency",
+            "hard_constraints": [],
+        },
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+    })
+    weights = result["current_weights"]
+    assert round(sum(weights.values()), 3) == 1.0
+    assert "can continue" in result["reasoning"]
+    assert result["total_input_tokens"] == 2

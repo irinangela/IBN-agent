@@ -10,6 +10,28 @@ from nodes import (
     distinct_failed_weight_count,
     MIN_DISTINCT_FAILED_WEIGHTS,
 )
+from nodes.llm import invoke_structured
+
+
+class _ScriptedChain:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = 0
+
+    def invoke(self, payload):
+        self.calls += 1
+        return self.responses.pop(0)
+
+
+def test_invoke_structured_retries_once_when_parsed_is_none():
+    parsed = object()
+    chain = _ScriptedChain([
+        {"parsed": None, "raw": None},
+        {"parsed": parsed, "raw": None},
+    ])
+    response = invoke_structured(chain, {"intent": "x"})
+    assert response["parsed"] is parsed
+    assert chain.calls == 2
 
 
 def test_clip_prevents_raw_jump_to_one():

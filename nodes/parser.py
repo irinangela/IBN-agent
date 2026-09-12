@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage
 
 from state import AgentState
-from nodes.llm import llm
+from nodes.llm import llm, invoke_structured, structured_usage
 from nodes.schemas import IntentSchema
 
 KNOWN_METRICS = ("latency", "cost", "security")
@@ -16,6 +16,11 @@ UNRESOLVED_PARSE_MESSAGE = (
     "The only supported metrics are latency, cost, and security. "
     "Please rewrite the intent and name the metric you care about so I can understand it and map it onto the optimizer. "
     '(for example: "Optimize for low latency. Average latency must stay under 1000ms.").'
+)
+
+STRUCTURED_PARSE_FAILED_MESSAGE = (
+    "Sorry, something went wrong and I could not create a valid structured intent from the given input. "
+    "Please rewrite the intent or try again."
 )
 
 
@@ -73,16 +78,23 @@ def intent_parser_node(state: AgentState) -> Dict[str, Any]:
 
     chain = prompt | structured_llm
     user_intent = state.get("user_intent", "")
-    response = chain.invoke({"intent": user_intent})
+    response = invoke_structured(chain, {"intent": user_intent})
+    parsed_result = response.get("parsed")
+    in_tok, out_tok = structured_usage(response)
+    in_tokens = state.get("total_input_tokens", 0) + in_tok
+    out_tokens = state.get("total_output_tokens", 0) + out_tok
 
-    parsed_result = response["parsed"]
-    raw_msg = response["raw"]
+    if parsed_result is None:
+        return {
+            "original_parsed_intent": {},
+            "active_parsed_intent": {},
+            "parse_failed": True,
+            "parse_feedback": STRUCTURED_PARSE_FAILED_MESSAGE,
+            "needs_operator": True,
+            "total_input_tokens": in_tokens,
+            "total_output_tokens": out_tokens,
+        }
 
-    usage = getattr(raw_msg, "usage_metadata", {}) or {}
-    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
-    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
-
-    # Thresholds stay in operator units (ms / cost / security score). No norm remapping.
     original_intent_dict = get_relaxation_order(parsed_result.model_dump())
     active_intent_dict = copy.deepcopy(original_intent_dict)
     checked_metrics = parse_is_checked(original_intent_dict, user_intent)

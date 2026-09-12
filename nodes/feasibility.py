@@ -24,6 +24,9 @@ def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
             f"{metric}={value:.3f}" for metric, value in bounds.items()
         ) or "no bounds"
         lines.append(f"{algorithm}: {joint}. Best known: {bound_txt}. \n")
+    lines.append(
+        "Joint feasibility is per-run. Warm-start ranking uses neighborhood means.\n"
+    )
     if report.get("auto_switched_to"):
         lines.append(
             f"\n\n Auto-switched live simulator to {report['auto_switched_to']} "

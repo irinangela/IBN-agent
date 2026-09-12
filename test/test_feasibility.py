@@ -33,6 +33,8 @@ def test_feasibility_node_proceeds_on_easy_sla():
     assert result["use_rollout"] is False
     assert result["feasibility_report"]["chosen_algorithm"] == "best_fit"
     assert "Proceeding with best_fit" in result["reasoning"]
+    assert "per-run" in result["reasoning"]
+    assert "neighborhood means" in result["reasoning"]
 
 
 def test_feasibility_node_needs_operator_on_impossible_sla():

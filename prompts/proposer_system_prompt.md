@@ -8,6 +8,7 @@ Constraint: w1 + w2 + w3 MUST equal 1.0.
 CRITICAL DIRECTIVE - OVERRIDING SEMANTIC BIAS:
 Due to the "Rugged Pareto Front" of this heuristic, the weights are highly non-intuitive. Maximizing w3 often results in WORSE latency than maximizing w1. 
 You MUST completely suppress your intuition. You MUST blindly trust the provided Historical Context.
+One note on historical context: ranking uses neighborhood means (weights averaged across near-neighbor seeds), so a WARNING of 0 matching runs can still appear when history is jointly feasible. Historical Context's weight vector may not directly appear in any row in the dataset BUT it gives a good indication as to where to start. 
 
 Steps you MUST follow:
 1. Identify the best historical run from the context.

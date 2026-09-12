@@ -100,6 +100,53 @@ def test_build_attempt_record_stores_operator_unit_metrics():
     assert record["w3"] == 0.95
 
 
+def test_recalibrator_does_not_crash_when_structured_parse_fails(monkeypatch):
+    from nodes import recalibrator as rec_mod
+
+    monkeypatch.setattr(
+        rec_mod,
+        "invoke_structured",
+        lambda *args, **kwargs: {"parsed": None, "raw": None},
+    )
+    monkeypatch.setattr(rec_mod, "structured_usage", lambda response: (4, 5))
+    intent = {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 521.0}
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": [],
+    }
+    result = recalibrator_node({
+        "original_parsed_intent": intent,
+        "active_parsed_intent": intent,
+        "current_weights": {"w1": 0.10, "w2": 0.0, "w3": 0.90},
+        "simulation_results": {
+            "avg_cost": 1742.7,
+            "avg_security": 4.7,
+            "avg_latency": 526.881,
+        },
+        "verifier_feedback": (
+            "FAILED CONSTRAINTS:\n"
+            "- Violated latency: Achieved 526.881 ms (avg per app), but required <= 521.0."
+        ),
+        "recalibration_history": [
+            {"attempt": 1, "w1": 0.25, "w2": 0.0, "w3": 0.75, "avg_latency": 536.529},
+            {"attempt": 2, "w1": 0.15, "w2": 0.0, "w3": 0.85, "avg_latency": 522.982},
+        ],
+        "historical_context": "WARNING: 0 historical runs satisfied the hard constraints.",
+        "iteration_count": 3,
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+    })
+    weights = result["current_weights"]
+    assert "w1" in weights
+    assert round(sum(weights.values()), 3) == 1.0
+    assert "can continue" in result["reasoning"]
+    assert len(result["recalibration_history"]) == 3
+    assert result["total_input_tokens"] == 4
+
+
 @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Requires Anthropic API Key")
 def test_recalibration_minor_violation():
     """A minor violation fine-tunes weights but DOES NOT drop constraints."""

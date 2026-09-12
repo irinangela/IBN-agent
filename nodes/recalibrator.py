@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel, Field
 
 from state import AgentState
-from nodes.llm import llm
+from nodes.llm import llm, invoke_structured, structured_usage
 from nodes.schemas import MetricType, METRIC_RESULT_KEYS, HIGHER_IS_BETTER
 from nodes.weights import clip_and_normalize_weights
 
@@ -424,8 +424,7 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     ])
 
     chain = prompt | structured_llm
-
-    response = chain.invoke({
+    response = invoke_structured(chain, {
         "original": json.dumps(original_intent, indent=2),
         "active": json.dumps(parsed_intent, indent=2),
         "warm_start": warm_start_context,
@@ -434,13 +433,28 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
         "best_so_far": best_so_far,
         "relaxation_eligibility": format_relaxation_eligibility(parsed_intent),
     })
+    result = response.get("parsed")
+    in_tok, out_tok = structured_usage(response)
+    in_tokens = state.get("total_input_tokens", 0) + in_tok
+    out_tokens = state.get("total_output_tokens", 0) + out_tok
 
-    result = response["parsed"]
-    raw_msg = response["raw"]
+    prev_w1 = current_weights.get("w1", 0.333)
+    prev_w2 = current_weights.get("w2", 0.333)
+    prev_w3 = current_weights.get("w3", 0.334)
 
-    usage = getattr(raw_msg, "usage_metadata", {}) or {}
-    in_tokens = state.get("total_input_tokens", 0) + usage.get("input_tokens", 0)
-    out_tokens = state.get("total_output_tokens", 0) + usage.get("output_tokens", 0)
+    if result is None:
+        weights = clip_and_normalize_weights(
+            prev_w1, prev_w2, prev_w3 + 0.05,
+            prev_w1, prev_w2, prev_w3,
+        )
+        return {
+            "current_weights": weights,
+            "reasoning": "Structured parse failed. Nudged the previous weights so search can continue.",
+            "active_parsed_intent": parsed_intent,
+            "recalibration_history": updated_history,
+            "total_input_tokens": in_tokens,
+            "total_output_tokens": out_tokens,
+        }
 
     relax_metric = getattr(result, "relax_metric", None)
     relaxed_threshold = getattr(result, "relaxed_threshold", None)
@@ -464,15 +478,10 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
             "\n[SYSTEM]: No relaxable hard constraint remains. Weight search only."
         )
 
-    prev_w1 = current_weights.get("w1", 0.333)
-    prev_w2 = current_weights.get("w2", 0.333)
-    prev_w3 = current_weights.get("w3", 0.334)
-
     weights = clip_and_normalize_weights(
         result.w1, result.w2, result.w3,
         prev_w1, prev_w2, prev_w3,
     )
-
 
     return {
         "current_weights": weights,

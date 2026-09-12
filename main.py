@@ -66,6 +66,11 @@ def _render_node(node_name: str, node_state: dict) -> None:
         elif node_name == "Proposer":
             st.write("**Historical Warm-start Context:**")
             st.text(node_state.get("historical_context"))
+            st.caption(
+                "Warm-start ranking uses neighborhood means (weights averaged across "
+                "near-neighbor seeds). Feasibility matches are per-run, so a WARNING "
+                "of 0 matching runs can still appear when history is jointly feasible."
+            )
             st.write("**LLM Reasoning:**")
             st.info(node_state.get("reasoning"))
             st.write("**Proposed Weights:**")
