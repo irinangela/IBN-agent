@@ -147,6 +147,42 @@ def test_recalibrator_does_not_crash_when_structured_parse_fails(monkeypatch):
     assert result["total_input_tokens"] == 4
 
 
+def test_recalibrator_cold_start_uses_live_attempts_only(monkeypatch):
+    from nodes import recalibrator as rec_mod
+
+    captured = {}
+
+    def _capture(chain, payload):
+        captured["payload"] = payload
+        return {"parsed": None, "raw": None}
+
+    monkeypatch.setattr(rec_mod, "retrieval_seeds", lambda: ())
+    monkeypatch.setattr(rec_mod, "invoke_structured", _capture)
+    monkeypatch.setattr(rec_mod, "structured_usage", lambda response: (0, 0))
+    intent = {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 521.0}
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": ["latency"],
+    }
+    recalibrator_node({
+        "original_parsed_intent": intent,
+        "active_parsed_intent": intent,
+        "current_weights": {"w1": 0.10, "w2": 0.0, "w3": 0.90},
+        "simulation_results": {"avg_latency": 526.881},
+        "verifier_feedback": "FAILED CONSTRAINTS:\n- Violated latency: Achieved 526.881 ms",
+        "recalibration_history": [],
+        "historical_context": "WARNING: 0 historical runs satisfied the hard constraints.",
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+    })
+    warm_start = captured["payload"]["warm_start"]
+    assert warm_start.startswith("COLD START")
+    assert "WARNING" not in warm_start
+
+
 @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="Requires Anthropic API Key")
 def test_recalibration_minor_violation():
     """A minor violation fine-tunes weights but DOES NOT drop constraints."""

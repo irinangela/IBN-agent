@@ -106,6 +106,41 @@ def test_filter_runs_is_per_algorithm():
     assert set(rollout["algorithm"].unique()) == {"app_rollout"}
 
 
+def test_retrieval_seeds_zero_is_cold_start(monkeypatch):
+    import simulation.config as cfg
+
+    monkeypatch.setattr(cfg, "WARM_START_MODE", "near_neighbor")
+    monkeypatch.setattr(cfg, "WARM_START_K", 0)
+    assert cfg.retrieval_seeds() == ()
+    assert filter_runs(algorithm="best_fit").empty
+    constrained = {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 1000.0}
+        ],
+        "non_relaxable_constraints": [],
+    }
+    report = feasibility_report(constrained)
+    assert report["needs_operator"] is False
+    assert report["no_historical_evidence"] is True
+    assert report["auto_switched_to"] is None
+    assert report["chosen_algorithm"] == "best_fit"
+    assert report["seeds"] == []
+    assert report["suggested_relaxations"] == []
+    context = get_warm_start_context(constrained)
+    assert context.startswith("COLD START")
+    assert "WARNING:" not in context
+
+    unconstrained = feasibility_report({
+        "primary_objective": "cost",
+        "hard_constraints": [],
+        "non_relaxable_constraints": [],
+    })
+    assert unconstrained["needs_operator"] is False
+    assert unconstrained["no_historical_evidence"] is True
+    assert unconstrained["suggested_relaxations"] == []
+
+
 def test_near_neighbor_retrieval_excludes_live_seed():
     """Warm-start must not read the live instance in near_neighbor mode."""
     if WARM_START_MODE != "near_neighbor":

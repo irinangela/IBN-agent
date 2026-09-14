@@ -15,11 +15,12 @@ def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
     ]
     for algorithm, info in (report.get("per_algorithm") or {}).items():
         bounds = info.get("bounds") or {}
-        joint = (
-            "jointly feasible"
-            if info.get("jointly_feasible")
-            else "not jointly feasible"
-        )
+        if report.get("no_historical_evidence"):
+            joint = "no historical evidence"
+        elif info.get("jointly_feasible"):
+            joint = "jointly feasible"
+        else:
+            joint = "not jointly feasible"
         bound_txt = ", ".join(
             f"{metric}={value:.3f}" for metric, value in bounds.items()
         ) or "no bounds"
@@ -27,7 +28,13 @@ def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
     lines.append(
         "Joint feasibility is per-run. Warm-start ranking uses neighborhood means.\n"
     )
-    if report.get("auto_switched_to"):
+    if report.get("no_historical_evidence"):
+        lines.append(
+            "\n\nCold start: retrieval pool is empty, so feasibility cannot "
+            "certify the SLA from history. Proceeding with best_fit. "
+            "Search starts from the simplex center, not a historical seed."
+        )
+    elif report.get("auto_switched_to"):
         lines.append(
             f"\n\n Auto-switched live simulator to {report['auto_switched_to']} "
             "(historically feasible)."

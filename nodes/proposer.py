@@ -5,9 +5,17 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel, Field
 
 from state import AgentState
+from simulation.config import retrieval_seeds
 from utils.retriever import get_warm_start_context
 from nodes.llm import llm, invoke_structured, structured_usage
-from nodes.weights import clip_and_normalize_weights
+from nodes.weights import SIMPLEX_CENTER, clip_and_normalize_weights
+
+COLD_START_PROPOSER_CONTEXT = (
+    "COLD START: retrieval pool is empty. There are no historical runs. "
+    "Do not invent a historical row and do not copy the system-prompt example "
+    "(w1=1.0 for latency). Code will clip your proposal to ±0.15 of the "
+    "simplex center w1=0.333, w2=0.333, w3=0.334."
+)
 
 
 class ProposedWeights(BaseModel):
@@ -43,9 +51,13 @@ except FileNotFoundError:
 def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
     parsed_intent = state["active_parsed_intent"]
     algorithm = "app_rollout" if state.get("use_rollout") else "best_fit"
-    historical_context = get_warm_start_context(
-        parsed_intent, algorithm=algorithm
+    cold_start = not retrieval_seeds()
+    historical_context = (
+        COLD_START_PROPOSER_CONTEXT
+        if cold_start
+        else get_warm_start_context(parsed_intent, algorithm=algorithm)
     )
+    clip_base = SIMPLEX_CENTER if cold_start else None
 
     structured_llm = llm.with_structured_output(ProposedWeights, include_raw=True)
     prompt = ChatPromptTemplate.from_messages([
@@ -73,9 +85,14 @@ def weight_proposer_node(state: AgentState) -> Dict[str, Any]:
             "total_output_tokens": out_tokens,
         }
 
+    if clip_base is None:
+        clip_base = (
+            result.best_historical_w1,
+            result.best_historical_w2,
+            result.best_historical_w3,
+        )
     weights = clip_and_normalize_weights(
-        result.w1, result.w2, result.w3,
-        result.best_historical_w1, result.best_historical_w2, result.best_historical_w3,
+        result.w1, result.w2, result.w3, *clip_base,
     )
 
     return {

@@ -52,6 +52,23 @@ def test_feasibility_node_needs_operator_on_impossible_sla():
     assert "Operator input required" in result["reasoning"]
 
 
+def test_feasibility_node_cold_start_proceeds_without_hitl(monkeypatch):
+    import simulation.config as cfg
+
+    monkeypatch.setattr(cfg, "WARM_START_MODE", "near_neighbor")
+    monkeypatch.setattr(cfg, "WARM_START_K", 0)
+    result = feasibility_node({
+        "active_parsed_intent": _intent(),
+        "operator_decision": {},
+    })
+    report = result["feasibility_report"]
+    assert result["needs_operator"] is False
+    assert report["no_historical_evidence"] is True
+    assert report["auto_switched_to"] is None
+    assert "Cold start" in result["reasoning"]
+    assert "Operator input required" not in result["reasoning"]
+
+
 def test_feasibility_node_auto_switch_sets_use_rollout():
     best_fit = filter_runs(algorithm="best_fit")
     rollout = filter_runs(algorithm="app_rollout")

@@ -7,12 +7,18 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel, Field
 
 from state import AgentState
+from simulation.config import retrieval_seeds
 from nodes.llm import llm, invoke_structured, structured_usage
 from nodes.schemas import MetricType, METRIC_RESULT_KEYS, HIGHER_IS_BETTER
 from nodes.weights import clip_and_normalize_weights
 
 
 MIN_DISTINCT_FAILED_WEIGHTS = 3
+COLD_START_RECALIBRATOR_CONTEXT = (
+    "COLD START: no historical weight table. Rank only Past Attempts from this run. "
+    "Do not invent historical candidates. If you relax, justify it from this run's "
+    "best-so-far, not from a missing CSV bound."
+)
 
 def _matching_constraint(intent: Dict[str, Any], metric: str) -> Optional[Dict[str, Any]]:
     for hc in intent.get("hard_constraints") or []:
@@ -396,6 +402,8 @@ def recalibrator_node(state: AgentState) -> Dict[str, Any]:
     history = list(state.get("recalibration_history") or [])
     results = state.get("simulation_results") or {}
     warm_start_context = state.get("historical_context") or "No historical context available."
+    if not retrieval_seeds():
+        warm_start_context = COLD_START_RECALIBRATOR_CONTEXT
 
     current_attempt_record = build_attempt_record(
         attempt_num=len(history) + 1,

@@ -15,7 +15,8 @@
 # The CSV holds all of WARM_START_SEEDS plus SEED
 # The pruning only changes which of them the retriever is allowed to read:
 #   WARM_START_MODE = "oracle"       -> retrieve SEED (idealized, upper bound)
-#   WARM_START_MODE = "near_neighbor" + WARM_START_K = 1 / 2 / 5 / None
+#   WARM_START_MODE = "near_neighbor" + WARM_START_K = 0 / 1 / 2 / 5 / None
+#   0 is cold start (empty retrieval). None is the full WARM_START_SEEDS pool.
 # Keep SEED fixed across conditions so retrieval size is the only variable.
 
 def _band(lo, hi, rel=None):
@@ -53,12 +54,16 @@ def retrieval_seeds():
 
     WARM_START_K trims the pool to its first K entries so the retrieval-size
     pruning needs no separate dataset. None means "use the whole pool".
+    0 is cold start: no historical seeds, so feasibility has no evidence and
+    the proposer gets an empty warm-start table.
     """
     if WARM_START_MODE == "oracle":
         return (int(SEED),)
     seeds = tuple(int(s) for s in WARM_START_SEEDS)
     if WARM_START_K is not None:
-        k = max(1, int(WARM_START_K))
+        k = int(WARM_START_K)
+        if k <= 0:
+            return ()
         seeds = seeds[:k]
     return seeds
 
@@ -73,7 +78,9 @@ WARM_START_SEEDS = tuple(range(200, 210))
 # "near_neighbor": retrieve WARM_START_SEEDS only (thesis default).
 # "oracle": retrieve SEED (idealized warm-start).
 WARM_START_MODE = "near_neighbor"
-# None = whole pool. Set 1 or 2 or 5 for the retrieval-size pruning.
+# None = whole pool. Set 5 / 2 / 1 for pruning, 0 for cold start.
+# k=0 does not HITL and does not invent a historical clip center -> search
+# starts at the simplex midpoint and Recalibrator uses live attempts only.
 WARM_START_K = None
 
 # Seeds written by scripts/generate_dataset.py (pool + live, so "oracle" is a

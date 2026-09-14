@@ -1,4 +1,8 @@
-from typing import Dict
+from typing import Dict, Tuple
+
+# Default first guess when retrieval is empty. Recalibrator still walks ±0.15
+# from whatever landed here, so this only sets the start, not the whole search.
+SIMPLEX_CENTER: Tuple[float, float, float] = (0.333, 0.333, 0.334)
 
 
 def clip_and_normalize_weights(

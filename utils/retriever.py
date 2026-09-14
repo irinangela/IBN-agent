@@ -5,6 +5,11 @@ import pandas as pd
 
 from simulation.config import WARM_START_MODE, SEED, retrieval_seeds
 
+COLD_START_CONTEXT = (
+    "COLD START: retrieval pool is empty. There are no historical runs to copy. "
+    "Do not invent a historical row or treat this as proof that the SLA is infeasible."
+)
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
 
@@ -255,7 +260,12 @@ def feasibility_report(
 
     auto_switched_to = None
     needs_operator = False
-    if best_fit_ok:
+    no_historical_evidence = not wanted
+    if no_historical_evidence:
+        # Empty retrieval is not "history proved infeasible". HITL here would
+        # make every k=0 intent look like an operator intervention.
+        chosen_algorithm = "best_fit"
+    elif best_fit_ok:
         chosen_algorithm = "best_fit"
     elif rollout_ok:
         chosen_algorithm = "app_rollout"
@@ -316,6 +326,7 @@ def feasibility_report(
         "live_seed": SEED,
         "warm_start_mode": WARM_START_MODE,
         "needs_operator": needs_operator,
+        "no_historical_evidence": no_historical_evidence,
         "auto_switched_to": auto_switched_to,
         "chosen_algorithm": chosen_algorithm,
         "per_algorithm": per_algorithm,
@@ -359,6 +370,8 @@ def get_warm_start_context(
     matching the verifier. Defaults to retrieval_seeds(), not the live instance.
     """
     wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
+    if not wanted:
+        return COLD_START_CONTEXT
     valid_df = filter_runs(algorithm=algorithm, seeds=wanted)
     averaged = average_by_weight(valid_df)
     filtered_df = apply_hard_constraints(averaged, parsed_intent.get("hard_constraints", []))

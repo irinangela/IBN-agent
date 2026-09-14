@@ -66,3 +66,39 @@ def test_proposer_uses_balanced_weights_when_parse_fails(monkeypatch):
     assert round(sum(weights.values()), 3) == 1.0
     assert "can continue" in result["reasoning"]
     assert result["total_input_tokens"] == 2
+
+
+def test_proposer_cold_start_ignores_invented_historical_baseline(monkeypatch):
+    """Prompt-example (w1=1.0) must not become the k=0 clip center."""
+    from nodes import proposer as proposer_mod
+
+    class _InventedHistory:
+        best_historical_w1 = 1.0
+        best_historical_w2 = 0.0
+        best_historical_w3 = 0.0
+        w1 = 0.90
+        w2 = 0.05
+        w3 = 0.05
+        reasoning = "copied the latency example"
+
+    monkeypatch.setattr(proposer_mod, "retrieval_seeds", lambda: ())
+    monkeypatch.setattr(
+        proposer_mod,
+        "invoke_structured",
+        lambda *args, **kwargs: {"parsed": _InventedHistory(), "raw": None},
+    )
+    monkeypatch.setattr(proposer_mod, "structured_usage", lambda response: (1, 1))
+    result = weight_proposer_node({
+        "active_parsed_intent": {
+            "primary_objective": "latency",
+            "hard_constraints": [
+                {"metric": "latency", "operator": "<=", "threshold": 1000.0}
+            ],
+        },
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+    })
+    weights = result["current_weights"]
+    assert abs(sum(weights.values()) - 1.0) < 0.002
+    assert weights["w1"] < 0.65
+    assert result["historical_context"].startswith("COLD START")
