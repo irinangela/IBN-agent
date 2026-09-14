@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional, Sequence
 
 import pandas as pd
 
-from simulation.config import WARM_START_MODE, SEED, retrieval_seeds
+from simulation import config as sim_cfg
+from simulation.config import retrieval_seeds, retrieval_weight_sets
 
 COLD_START_CONTEXT = (
     "COLD START: retrieval pool is empty. There are no historical runs to copy. "
@@ -56,25 +57,47 @@ def resolve_retrieval_seeds(
     return retrieval_seeds()
 
 
+def _weight_key(w1, w2, w3) -> tuple:
+    return (round(float(w1), 10), round(float(w2), 10), round(float(w3), 10))
+
+
+def apply_weight_grid(frame: pd.DataFrame, step=None) -> pd.DataFrame:
+    """Keep rows whose (W1, W2, W3) sit on the active retrieval grid."""
+    if frame is None or frame.empty:
+        return frame.copy() if frame is not None else pd.DataFrame()
+    weight_cols = _weight_columns(frame)
+    if len(weight_cols) != 3:
+        return frame.copy()
+    wanted = set(retrieval_weight_sets(step=step))
+    keys = [
+        _weight_key(*vals)
+        for vals in frame[weight_cols].itertuples(index=False, name=None)
+    ]
+    return frame.loc[[key in wanted for key in keys]].copy()
+
+
 def filter_runs(
     seed: Optional[int] = None,
     algorithm: str = DEFAULT_ALGORITHM,
     seeds: Optional[Sequence[int]] = None,
+    grid_step=None,
 ) -> pd.DataFrame:
     """Valid, failure-free rows for the retrieval seed set and one algorithm.
 
     By default this is WARM_START_SEEDS (near-neighbor mode), not the live SEED.
     Pass seed=... only when you intentionally want a single instance slice.
+    Weight rows are further restricted to retrieval_weight_sets().
     """
     if df.empty:
         return df.copy()
     wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
-    return df[
+    sliced = df[
         (df["valid"] == True)
         & (df["failures"] == 0)
         & (df["seed"].isin(wanted))
         & (df["algorithm"] == algorithm)
     ].copy()
+    return apply_weight_grid(sliced, step=grid_step)
 
 
 def apply_hard_constraints(
@@ -178,8 +201,9 @@ def _conditional_best_for_algorithm(
     others: list,
     seeds: Sequence[int],
     algorithm: str,
+    grid_step=None,
 ) -> Optional[float]:
-    runs = filter_runs(algorithm=algorithm, seeds=seeds)
+    runs = filter_runs(algorithm=algorithm, seeds=seeds, grid_step=grid_step)
     filtered = apply_hard_constraints(runs, others)
     bound = best_known_bounds(filtered).get(metric)
     return float(bound) if bound is not None else None
@@ -220,8 +244,13 @@ def _best_observed_lines(
     return lines
 
 
-def _algorithm_slice(seeds: Sequence[int], algorithm: str, hard_constraints: list) -> Dict[str, Any]:
-    runs = filter_runs(algorithm=algorithm, seeds=seeds)
+def _algorithm_slice(
+    seeds: Sequence[int],
+    algorithm: str,
+    hard_constraints: list,
+    grid_step=None,
+) -> Dict[str, Any]:
+    runs = filter_runs(algorithm=algorithm, seeds=seeds, grid_step=grid_step)
     bounds = best_known_bounds(runs)
     infeasible = []
     for constraint in hard_constraints or []:
@@ -241,6 +270,7 @@ def feasibility_report(
     parsed_intent: Dict[str, Any],
     seed: Optional[int] = None,
     seeds: Optional[Sequence[int]] = None,
+    grid_step=None,
 ) -> Dict[str, Any]:
     """Deterministic bounds and joint feasibility on the warm-start seed set."""
 
@@ -249,9 +279,12 @@ def feasibility_report(
     non_relaxable = {
         m.lower() for m in (parsed_intent.get("non_relaxable_constraints") or [])
     }
+    step = sim_cfg.WARM_START_GRID_STEP if grid_step is None else grid_step
 
     per_algorithm = {
-        algorithm: _algorithm_slice(wanted, algorithm, hard_constraints)
+        algorithm: _algorithm_slice(
+            wanted, algorithm, hard_constraints, grid_step=step
+        )
         for algorithm in ALGORITHMS
     }
 
@@ -291,7 +324,7 @@ def feasibility_report(
             options = []
             for algorithm in ALGORITHMS:
                 best = _conditional_best_for_algorithm(
-                    metric_name, others, wanted, algorithm
+                    metric_name, others, wanted, algorithm, grid_step=step
                 )
                 given = list(other_labels)
                 if best is None:
@@ -323,8 +356,10 @@ def feasibility_report(
     return {
         "seed": wanted[0] if wanted else None,
         "seeds": list(wanted),
-        "live_seed": SEED,
-        "warm_start_mode": WARM_START_MODE,
+        "live_seed": sim_cfg.SEED,
+        "warm_start_mode": sim_cfg.WARM_START_MODE,
+        "warm_start_grid_step": step,
+        "warm_start_grid_points": len(retrieval_weight_sets(step=step)),
         "needs_operator": needs_operator,
         "no_historical_evidence": no_historical_evidence,
         "auto_switched_to": auto_switched_to,
@@ -360,6 +395,7 @@ def get_warm_start_context(
     seed: Optional[int] = None,
     seeds: Optional[Sequence[int]] = None,
     algorithm: str = DEFAULT_ALGORITHM,
+    grid_step=None,
 ) -> str:
     """
     Filters the historical dataset based on hard constraints and primary objective,
@@ -372,7 +408,7 @@ def get_warm_start_context(
     wanted = resolve_retrieval_seeds(seed=seed, seeds=seeds)
     if not wanted:
         return COLD_START_CONTEXT
-    valid_df = filter_runs(algorithm=algorithm, seeds=wanted)
+    valid_df = filter_runs(algorithm=algorithm, seeds=wanted, grid_step=grid_step)
     averaged = average_by_weight(valid_df)
     filtered_df = apply_hard_constraints(averaged, parsed_intent.get("hard_constraints", []))
 

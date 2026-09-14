@@ -141,6 +141,57 @@ def test_retrieval_seeds_zero_is_cold_start(monkeypatch):
     assert unconstrained["suggested_relaxations"] == []
 
 
+def test_retrieval_weight_grid_step_subsets_stored_grid(monkeypatch):
+    import simulation.config as cfg
+    from simulation.config import _simplex_weight_grid
+
+    dense = _simplex_weight_grid(0.1)
+    sparse = _simplex_weight_grid(0.2)
+    assert len(dense) == 66
+    assert len(sparse) == 21
+    assert set(sparse).issubset(set(dense))
+
+    monkeypatch.setattr(cfg, "WARM_START_GRID_STEP", 0.1)
+    dense_runs = filter_runs(algorithm="best_fit", seeds=tuple(WARM_START_SEEDS))
+    retrieved = cfg.retrieval_weight_sets(step=0.2)
+    assert len(retrieved) == 21
+    assert set(retrieved) == set(sparse)
+    sparse_runs = filter_runs(
+        algorithm="best_fit",
+        seeds=tuple(WARM_START_SEEDS),
+        grid_step=0.2,
+    )
+    assert not dense_runs.empty
+    assert not sparse_runs.empty
+    assert sparse_runs["W1"].nunique() <= 21
+    assert len(sparse_runs) < len(dense_runs)
+    report = feasibility_report({
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 10000.0}
+        ],
+        "non_relaxable_constraints": [],
+    }, grid_step=0.2)
+    assert report["warm_start_grid_step"] == 0.2
+    assert report["warm_start_grid_points"] == 21
+
+
+def test_easy_sla_stays_feasible_on_sparse_grid():
+    intent = {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {"metric": "latency", "operator": "<=", "threshold": 1000.0}
+        ],
+        "non_relaxable_constraints": [],
+    }
+    dense = feasibility_report(intent, seeds=tuple(WARM_START_SEEDS), grid_step=0.1)
+    sparse = feasibility_report(intent, seeds=tuple(WARM_START_SEEDS), grid_step=0.2)
+    assert dense["needs_operator"] is False
+    assert sparse["needs_operator"] is False
+    assert dense["auto_switched_to"] is None
+    assert sparse["auto_switched_to"] is None
+
+
 def test_near_neighbor_retrieval_excludes_live_seed():
     """Warm-start must not read the live instance in near_neighbor mode."""
     if WARM_START_MODE != "near_neighbor":

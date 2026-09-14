@@ -91,6 +91,7 @@ def test_save_run_analytics_writes_attempts_and_user_intent(tmp_path, monkeypatc
     monkeypatch.chdir(tmp_path)
     path = save_run_analytics(_base_state(), 1.23)
     assert os.path.isfile(path)
+    assert "results-analytics-phase-6" in path.replace("\\", "/")
 
     import json
     payload = json.loads(open(path, encoding="utf-8").read())
@@ -99,3 +100,19 @@ def test_save_run_analytics_writes_attempts_and_user_intent(tmp_path, monkeypatc
     assert payload["relaxations"][0]["metric"] == "latency"
     assert payload["relaxation_events"][0]["iteration"] is None
     assert payload["success"] is True
+    assert "cold_start" in payload
+    assert payload["warm_start_grid_points"] == 66
+    assert payload["warm_start_grid_step"] == 0.1
+
+
+def test_save_run_analytics_does_not_overwrite_when_ids_have_gaps(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    save_dir = "results-analytics-phase-6"
+    os.makedirs(save_dir, exist_ok=True)
+    from datetime import datetime
+    date_str = datetime.now().strftime("%d-%m-%Y")
+    open(os.path.join(save_dir, f"{date_str}-run-1.json"), "w", encoding="utf-8").write("{}")
+    open(os.path.join(save_dir, f"{date_str}-run-3.json"), "w", encoding="utf-8").write("{}")
+    path = save_run_analytics(_base_state(), 0.5)
+    assert path.replace("\\", "/").endswith(f"{date_str}-run-4.json")
+    assert os.path.isfile(os.path.join(save_dir, f"{date_str}-run-3.json"))

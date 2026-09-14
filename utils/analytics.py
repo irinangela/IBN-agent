@@ -1,10 +1,18 @@
 import os
 import json
 import glob
+import re
 from datetime import datetime
 from typing import Optional
 
-from simulation.config import WARM_START_MODE, WARM_START_SEEDS, SEED, retrieval_seeds
+from simulation.config import (
+    WARM_START_MODE,
+    WARM_START_SEEDS,
+    WARM_START_GRID_STEP,
+    SEED,
+    retrieval_seeds,
+    retrieval_weight_sets,
+)
 from nodes.llm import MODEL_ID, TEMPERATURE
 
 def _threshold_map(intent: dict) -> dict:
@@ -102,9 +110,23 @@ def complete_attempt_log(final_state: dict) -> list:
     return history + [last]
 
 
+_RUN_FILENAME = re.compile(r"^(\d{2}-\d{2}-\d{4})-run-(\d+)\.json$")
+
+
+def _next_analytics_path(save_dir: str) -> str:
+    """Next dated run path. Uses max existing index so gaps are not overwritten."""
+    date_str = datetime.now().strftime("%d-%m-%Y")
+    max_n = 0
+    for path in glob.glob(os.path.join(save_dir, f"{date_str}-run-*.json")):
+        match = _RUN_FILENAME.match(os.path.basename(path))
+        if match:
+            max_n = max(max_n, int(match.group(2)))
+    return os.path.join(save_dir, f"{date_str}-run-{max_n + 1}.json")
+
+
 def save_run_analytics(final_state: dict, execution_time_seconds: float):
     """Extracts metrics from the final state and saves them to a JSON file."""
-    save_dir = "results-analytics"
+    save_dir = os.getenv("RESULTS_ANALYTICS_DIR", "results-analytics-phase-6")
     os.makedirs(save_dir, exist_ok=True)
 
     original_intent = final_state.get("original_parsed_intent", {})
@@ -142,15 +164,15 @@ def save_run_analytics(final_state: dict, execution_time_seconds: float):
         "seed": SEED,
         "warm_start_seeds": list(retrieval_seeds()),
         "warm_start_mode": WARM_START_MODE,
+        "warm_start_grid_step": WARM_START_GRID_STEP,
+        "warm_start_grid_points": len(retrieval_weight_sets()),
         "historical_seeds": list(WARM_START_SEEDS),     # we need both the warm_start_seeds and the historical_seeds for different modes
+        "cold_start": not retrieval_seeds(),
         "model": MODEL_ID,
         "temperature": TEMPERATURE,
     }
     
-    date_str = datetime.now().strftime("%d-%m-%Y")
-    existing_files = glob.glob(f"{save_dir}/{date_str}-run-*.json")
-    run_number = len(existing_files) + 1
-    filename = os.path.join(save_dir, f"{date_str}-run-{run_number}.json")
+    filename = _next_analytics_path(save_dir)
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(analytics, f, indent=4)
     return filename

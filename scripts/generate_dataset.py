@@ -240,7 +240,8 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     print(
         f"Instance family: SEED(live)={cfg.SEED}, WARM_START_SEEDS={cfg.WARM_START_SEEDS}, "
-        f"WARM_START_MODE={cfg.WARM_START_MODE}, WARM_START_K={cfg.WARM_START_K}"
+        f"WARM_START_MODE={cfg.WARM_START_MODE}, WARM_START_K={cfg.WARM_START_K}, "
+        f"stored_grid={len(weights)} (generation ignores WARM_START_GRID_STEP={cfg.WARM_START_GRID_STEP})"
     )
     print(f"Sweeping seeds={seeds} weights={len(weights)} algorithms={algorithms}")
     print(f"Target rows: {len(seeds) * len(weights) * len(algorithms)}")

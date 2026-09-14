@@ -17,7 +17,9 @@
 #   WARM_START_MODE = "oracle"       -> retrieve SEED (idealized, upper bound)
 #   WARM_START_MODE = "near_neighbor" + WARM_START_K = 0 / 1 / 2 / 5 / None
 #   0 is cold start (empty retrieval). None is the full WARM_START_SEEDS pool.
-# Keep SEED fixed across conditions so retrieval size is the only variable.
+#   WARM_START_GRID_STEP = 0.1 (66 CSV points) or 0.2 (21-point subsample).
+# Keep SEED fixed across conditions so retrieval size / grid density is the
+# only variable.
 
 def _band(lo, hi, rel=None):
     """Collapse [lo, hi] to a tight band around the midpoint."""
@@ -66,6 +68,28 @@ def retrieval_seeds():
             return ()
         seeds = seeds[:k]
     return seeds
+
+
+def retrieval_weight_sets(step=None):
+    """Weight triplets the retriever may read from valid_runs.csv.
+
+    The CSV always stores WARM_START_WEIGHT_SETS (step 0.1, 66 points).
+    WARM_START_GRID_STEP subsamples that grid at read time: 0.1 keeps all
+    66, 0.2 keeps the 21-point subset. Generation is never re-run.
+    """
+    stored = tuple(
+        (round(float(w1), 10), round(float(w2), 10), round(float(w3), 10))
+        for w1, w2, w3 in WARM_START_WEIGHT_SETS
+    )
+    if step is None:
+        step = WARM_START_GRID_STEP
+    if step is None:
+        return stored
+    step = float(step)
+    if abs(step - 0.1) < 1e-12:
+        return stored
+    wanted = set(_simplex_weight_grid(step))
+    return tuple(w for w in stored if w in wanted)
 
 
 # --- Simulation Parameters ---
@@ -225,12 +249,14 @@ WEIGHT_SETS = [
     (0.40, 0.25, 0.35),  # Balanced_2 (example_2)
 ]
 
-# Weight grid for the dataset sweep (66 points at step 0.1).
+# Weight grid stored in valid_runs.csv (66 points at step 0.1).
 # Both algorithms must share this grid: giving one algorithm more points 
 # would make it look artificially strong in the feasibility pre-check and 
 # that may suppress the auto-switch to app_rollout.
-# Density experiments subsample this grid at read time so no re-generation needed.
+# Density experiments subsample at read time via WARM_START_GRID_STEP.
 WARM_START_WEIGHT_SETS = _simplex_weight_grid(0.1)
+# 0.1 = all 66 CSV points. 0.2 = 21-point subset. Do not regenerate the CSV.
+WARM_START_GRID_STEP = 0.1
 
 # --- Algorithm toggles ---
 RUN_BEST_FIT = True

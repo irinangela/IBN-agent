@@ -9,9 +9,14 @@ def _format_feasibility_reasoning(report: Dict[str, Any]) -> str:
     seeds = report.get("seeds") or [report.get("seed")]
     mode = report.get("warm_start_mode") or "near_neighbor"
     live = report.get("live_seed")
+    grid_step = report.get("warm_start_grid_step")
+    grid_points = report.get("warm_start_grid_points")
+    grid_txt = ""
+    if grid_step is not None or grid_points is not None:
+        grid_txt = f", grid step={grid_step}, {grid_points} weight points"
     lines = [
         f"Feasibility pre-check on Warm-start seeds {seeds} "
-        f"(mode={mode}, live seed={live}). \n\n"
+        f"(mode={mode}, live seed={live}{grid_txt}). \n\n"
     ]
     for algorithm, info in (report.get("per_algorithm") or {}).items():
         bounds = info.get("bounds") or {}

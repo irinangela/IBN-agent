@@ -6,7 +6,7 @@ from langchain_anthropic import ChatAnthropic
 
 load_dotenv()
 
-MODEL_ID = "claude-haiku-4-5-20251001"
+MODEL_ID = os.getenv("AGENT_MODEL_ID", "claude-haiku-4-5-20251001")
 TEMPERATURE = 0
 
 llm = ChatAnthropic(
