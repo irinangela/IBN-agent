@@ -1,0 +1,132 @@
+{
+    "user_intent": "Average security must stay at 14 or above. Security is the objective, keep latency and cost reasonable if possible.",
+    "initial_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 14.0
+            }
+        ],
+        "soft_preferences": [
+            "keep latency reasonable if possible",
+            "keep cost reasonable if possible"
+        ],
+        "non_relaxable_constraints": [
+            "security"
+        ],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 14.0
+            }
+        ],
+        "soft_preferences": [
+            "keep latency reasonable if possible",
+            "keep cost reasonable if possible"
+        ],
+        "non_relaxable_constraints": [
+            "security"
+        ],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-14T11:55:34.945515",
+    "execution_time_seconds": 6.8,
+    "success": true,
+    "max_iterations": 10,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.283,
+            "w2": 0.433,
+            "w3": 0.284,
+            "avg_cost": 1048.287,
+            "avg_security": 14.5,
+            "avg_latency": 721.41,
+            "norm_cost": 16.283,
+            "norm_sec": 44.128,
+            "norm_lat": 19.065,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "security": 14.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": null,
+        "seeds": [],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "no_historical_evidence": true,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3710,
+        "output_tokens": 537,
+        "total_tokens": 4247
+    },
+    "final_weights": {
+        "w1": 0.283,
+        "w2": 0.433,
+        "w3": 0.284
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 52414.368,
+        "total_security": 725.0,
+        "total_latency": 36070.503,
+        "avg_cost": 1048.287,
+        "avg_security": 14.5,
+        "avg_latency": 721.41,
+        "norm_cost": 16.283,
+        "norm_sec": 44.128,
+        "norm_lat": 19.065,
+        "total_score": 12.565
+    },
+    "seed": 210,
+    "warm_start_seeds": [],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "cold_start": true,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

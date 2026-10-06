@@ -1,0 +1,158 @@
+{
+    "user_intent": "Minimize average cost. Keep cost at or below 1000. Latency and security are secondary.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": [
+            "cost"
+        ]
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": [
+            "cost"
+        ]
+    },
+    "timestamp": "2026-09-13T15:17:44.254617",
+    "execution_time_seconds": 9.16,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.95,
+            "w2": 0.0,
+            "w3": 0.05,
+            "avg_cost": 328.312,
+            "avg_security": 4.46,
+            "avg_latency": 919.483,
+            "norm_cost": 2.055,
+            "norm_sec": 3.929,
+            "norm_lat": 26.099,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "cost": 1000.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3821,
+        "output_tokens": 480,
+        "total_tokens": 4301
+    },
+    "final_weights": {
+        "w1": 0.95,
+        "w2": 0.0,
+        "w3": 0.05
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16415.589,
+        "total_security": 223.0,
+        "total_latency": 45974.142,
+        "avg_cost": 328.312,
+        "avg_security": 4.46,
+        "avg_latency": 919.483,
+        "norm_cost": 2.055,
+        "norm_sec": 3.929,
+        "norm_lat": 26.099,
+        "total_score": 3.257
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-sonnet-4-5-20250929",
+    "temperature": 0
+}

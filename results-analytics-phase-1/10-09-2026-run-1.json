@@ -1,0 +1,156 @@
+{
+    "user_intent": "Optimize for low latency. Average latency must stay under 1000ms. Cost and security are secondary.",
+    "initial_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {
+                "metric": "latency",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "cost is secondary",
+            "security is secondary"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [
+            {
+                "metric": "latency",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "cost is secondary",
+            "security is secondary"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-10T15:49:07.871506",
+    "execution_time_seconds": 7.82,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.25,
+            "w2": 0.0,
+            "w3": 0.75,
+            "avg_cost": 773.187,
+            "avg_security": 4.52,
+            "avg_latency": 536.529,
+            "norm_cost": 10.854,
+            "norm_sec": 4.158,
+            "norm_lat": 12.499,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "latency": 1000.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3759,
+        "output_tokens": 567,
+        "total_tokens": 4326
+    },
+    "final_weights": {
+        "w1": 0.25,
+        "w2": 0.0,
+        "w3": 0.75
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 38659.371,
+        "total_security": 226.0,
+        "total_latency": 26826.453,
+        "avg_cost": 773.187,
+        "avg_security": 4.52,
+        "avg_latency": 536.529,
+        "norm_cost": 10.854,
+        "norm_sec": 4.158,
+        "norm_lat": 12.499,
+        "total_score": 12.087
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

@@ -109,7 +109,11 @@
         "hitl_relaxable"
       ],
       "thesis_insight": "Baseline first-try success. Warm-start should return matching runs and the verifier should pass without HITL or in-loop relaxation.",
-      "parser_note": "'must stay under' is a hard SLA, not a never-relax keyword. Same sentence as the UI latency preset. Contrast POL-01 which uses 'never'."
+      "parser_note": "'must stay under' is a hard SLA, not a never-relax keyword. Same sentence as the UI latency preset. Contrast POL-01 which uses 'never'.",
+      "results-analytics-id-phase-1": "10-09-2026-run-1",
+      "results-analytics-id-phase-2": "13-09-2026-run-1",
+      "results-analytics-id-phase-5": "14-09-2026-run-1",
+      "results-analytics-id-phase-6": "14-09-2026-run-10"
     },
     {
       "id": "LAT-02",
@@ -139,7 +143,8 @@
         "hitl_relaxable"
       ],
       "thesis_insight": "Comfortable but no longer slack. Distinguishes whether warm-start ranking still finds a good latency corner when the filter is narrower than LAT-01.",
-      "parser_note": "No relax/loosen cue, so relaxation_order is empty even though latency is a hard constraint."
+      "parser_note": "No relax/loosen cue, so relaxation_order is empty even though latency is a hard constraint.",
+      "results-analytics-id-phase-1": "10-09-2026-run-2"
     },
     {
       "id": "LAT-03",
@@ -169,7 +174,9 @@
         "operator_help",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Above the 508 ms best_fit floor, so Feasibility stays on best_fit. Live best_fit can do about 520 ms. Contrast with LAT-05 (500 ms), which auto-switches to app_rollout, and with POL-01 (470 ms), which pauses."
+      "thesis_insight": "Above the 508 ms best_fit floor, so Feasibility stays on best_fit. Live best_fit can do about 520 ms. Contrast with LAT-05 (500 ms), which auto-switches to app_rollout, and with POL-01 (470 ms), which pauses.",
+      "results-analytics-id-phase-1": "10-09-2026-run-3",
+      "results-analytics-id-phase-5": "14-09-2026-run-2"
     },
     {
       "id": "LAT-04",
@@ -198,7 +205,12 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "521 ms is just above live best_fit (520.266 ms). History is jointly feasible on best_fit (floor 508.131 ms). Tests ranking quality at the live edge without pausing."
+      "thesis_insight": "521 ms is just above live best_fit (520.266 ms). History is jointly feasible on best_fit (floor 508.131 ms). Tests ranking quality at the live edge without pausing.",
+      "results-analytics-id-phase-1": {"11-09-2026-run-1": "5 iteration cap", "11-09-2026-run-2": "10 iteration cap"},
+      "results-analytics-id-phase-2": "13-09-2026-run-17",
+      "results-analytics-id-phase-4": {"13-09-2026-run-2": "k=5", "13-09-2026-run-8": "k=2", "13-09-2026-run-15": "k=1"},
+      "results-analytics-id-phase-5": "14-09-2026-run-3",
+      "results-analytics-id-phase-6": "14-09-2026-run-5"
     },
     {
       "id": "LAT-05",
@@ -228,11 +240,14 @@
         "operator_help",
         "hitl_relaxable"
       ],
-      "thesis_insight": "500 ms is below the best_fit floor (508.131 ms) but above the app_rollout floor (484.896 ms). Feasibility auto-switches to app_rollout and does not pause. Live rollout can do 491.834 ms (2 matching rows) and live best_fit cannot. "
+      "thesis_insight": "500 ms is below the best_fit floor (508.131 ms) but above the app_rollout floor (484.896 ms). Feasibility auto-switches to app_rollout and does not pause. Live rollout can do 491.834 ms (2 matching rows) and live best_fit cannot. ",
+      "results-analytics-id-phase-1": "11-09-2026-run-3",
+      "results-analytics-id-phase-2": "13-09-2026-run-23",
+      "results-analytics-id-phase-6": "14-09-2026-run-6"
     },
     {
       "id": "LAT-06",
-      "text": "Interactive traffic only: average latency has to remain under 400 ms. Do what you can with cost and security after that.",
+      "text": "Interactive traffic only: average latency has to remain under 400 ms. Do what you can with cost and security after that. If you cannot meet the SLA, you may latency slightly.",
       "target_metrics": [
         "latency"
       ],
@@ -258,11 +273,12 @@
         "hitl",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Same independent HITL offers as LAT-08 (best_fit 533.537 ms, app_rollout 509.141 ms) but the relative concession is larger versus 400 ms. Picking the app_rollout offer also switches live search. Both offers are above live floors (520.266 / 491.834 ms)."
+      "thesis_insight": "Same independent HITL offers as LAT-08 (best_fit 533.537 ms, app_rollout 509.141 ms) but the relative concession is larger versus 400 ms. Picking the app_rollout offer also switches live search. Both offers are above live floors (520.266 / 491.834 ms).",
+      "results-analytics-id-phase-1": {"11-09-2026-run-4": "best_fit", "11-09-2026-run-5": "app_rollout"}
     },
     {
       "id": "LAT-07",
-      "text": "Hard real-time: average latency must stay under 200 milliseconds. Latency is the only thing that matters.",
+      "text": "Hard real-time: average latency must stay under 200 milliseconds. Latency is the only thing that matters. If this is physically not possible, do your best with latency values.",
       "target_metrics": [
         "latency"
       ],
@@ -288,7 +304,8 @@
         "hitl",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Physically unattainable on this topology. HITL still only offers the two algorithm-tagged bounds (533.537 ms on best_fit, 509.141 ms on app_rollout). The agent cannot invent a 200 ms placement, it can only surface those floors."
+      "thesis_insight": "Physically unattainable on this topology. HITL still only offers the new input and continue anyway.",
+      "results-analytics-id-phase-1": {"11-09-2026-run-6": "5 iteration cap", "11-09-2026-run-7": "10 iteration cap"}
     },
     {
       "id": "LAT-08",
@@ -320,7 +337,9 @@
         "hitl_relaxable",
         "hitl_algorithm_offers"
       ],
-      "thesis_insight": "Canonical HITL two-offer demo (intents.md case 6). 470 ms is below both historical floors, so the operator sees best_fit at 533.537 ms (fast, live floor 520.266) and app_rollout at 509.141 ms (slower, live floor 491.834). Picking an offer also selects that algorithm. Contrast LAT-05 (500 ms auto-switches, no pause) and POL-01 (same 470 ms, Relax hidden)."
+      "thesis_insight": "Canonical HITL two-offer demo (intents.md case 6). 470 ms is below both historical floors, so the operator sees best_fit at 533.537 ms (fast, live floor 520.266) and app_rollout at 509.141 ms (slower, live floor 491.834). Picking an offer also selects that algorithm.",
+      "results-analytics-id-phase-1": {"11-09-2026-run-8": "best_fit", "11-09-2026-run-9": "app_rollout"},
+      "results-analytics-id-phase-2": "13-09-2026-run-25"
     },
     {
       "id": "COST-01",
@@ -350,7 +369,9 @@
         "ui_preset_cost",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Cost analogue of LAT-01. Warm-start should rank by lowest avg_cost among a large feasible slice."
+      "thesis_insight": "Cost analogue of LAT-01. Warm-start should rank by lowest avg_cost among a large feasible slice.",
+      "results-analytics-id-phase-1": "11-09-2026-run-10",
+      "results-analytics-id-phase-2": "13-09-2026-run-2"
     },
     {
       "id": "COST-02",
@@ -379,7 +400,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Mid-range cost SLA. Still jointly feasible, but the cheap corner of the front is more constrained than COST-01."
+      "thesis_insight": "Mid-range cost SLA. Still jointly feasible, but the cheap corner of the front is more constrained than COST-01.",
+      "results-analytics-id-phase-1": "11-09-2026-run-11"
     },
     {
       "id": "COST-03",
@@ -408,7 +430,11 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Well above the 305 historical floor (rollout) / 307 (best_fit) and the 329 live best_fit floor, but already on the cheap tail."
+      "thesis_insight": "Well above the 305 historical floor (rollout) / 307 (best_fit) and the 329 live best_fit floor, but already on the cheap tail.",
+      "results-analytics-id-phase-1": "11-09-2026-run-12",
+      "results-analytics-id-phase-2": "13-09-2026-run-4",
+      "results-analytics-id-phase-5": "14-09-2026-run-8",
+      "results-analytics-id-phase-6": "14-09-2026-run-9"
     },
     {
       "id": "COST-04",
@@ -437,7 +463,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Live best cost is 328.89, so 329 is the last integer threshold that live best_fit can still meet. One matching live row: a precision test of warm-start vs search."
+      "thesis_insight": "Live best cost is 328.89, so 329 is the last integer threshold that live best_fit can still meet. One matching live row: a precision test of warm-start vs search.",
+      "results-analytics-id-phase-1": "11-09-2026-run-13",
+      "results-analytics-id-phase-5": "14-09-2026-run-9"
     },
     {
       "id": "COST-05",
@@ -470,7 +498,8 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Historical best is 306.536 (best_fit) / 305.052 (app_rollout), so HITL offers 321.863 and 320.304. Live best is 328.892 / 327.566, so neither offer succeeds. Contrast with SEC-05, where both offers clear live, and with LAT-08, where both latency offers clear live."
+      "thesis_insight": "Historical best is 306.536 (best_fit) / 305.052 (app_rollout), so HITL offers 321.863 and 320.304. Live best is 328.892 / 327.566, so neither offer should succeed. Contrast with SEC-05, where both offers clear live, and with LAT-08, where both latency offers clear live. Best fit succeeded, app rollout failed for 5 iterations and succeded for 6. ",
+      "results-analytics-id-phase-1": {"11-09-2026-run-14": "best_fit", "11-09-2026-run-15": "app_rollout with 5 iteration cap", "11-09-2026-run-16": "app_rollout with 10 iteration cap"}
     },
     {
       "id": "COST-06",
@@ -500,7 +529,8 @@
         "hitl",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Far below every observed cost. HITL offers 321.863 (best_fit) and 320.304 (app_rollout), both still below live 328.892 / 327.566, so continue-anyway and relax-to-offer both fail unless the operator rewrites the intent."
+      "thesis_insight": "Far below every observed cost. HITL offers 321.863 (best_fit) and 320.304 (app_rollout), both still below live 328.892 / 327.566, so continue-anyway and relax-to-offer both fail unless the operator rewrites the intent.",
+      "results-analytics-id-phase-1": {"11-09-2026-run-17": "best_fit with 5 iteration cap", "11-09-2026-run-18": "best_fit with 10 iteration cap", "11-09-2026-run-19": "app_rollout"}
     },
     {
       "id": "COST-07",
@@ -530,7 +560,8 @@
         "live_gap",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Cost analogue of LAT-05, but the floor gap is tiny (best_fit 306.536 vs app_rollout 305.052). Feasibility auto-switches to app_rollout with only 2 historical matches. Live cost floors are 328.892 / 327.566, so search still fails. Shows that auto-switch is a historical decision, not a live guarantee. Contrast LAT-05, where the switched algorithm succeeds live."
+      "thesis_insight": "Cost analogue of LAT-05, but the floor gap is tiny (best_fit 306.536 vs app_rollout 305.052). Feasibility auto-switches to app_rollout with only 2 historical matches. Live cost floors are 328.892 / 327.566, so search still fails. Shows that auto-switch is a historical decision, not a live guarantee. Contrast LAT-05, where the switched algorithm succeeds live.",
+      "results-analytics-id-phase-1": {"11-09-2026-run-20": "5 iteration cap", "12-09-2026-run-1": "10 iteration cap"}
     },
     {
       "id": "SEC-01",
@@ -563,7 +594,10 @@
         "hitl_relaxable"
       ],
       "thesis_insight": "Checks that the parser emits security >= (not <=) and that warm-start sorts by highest neighborhood-averaged security.",
-      "parser_note": "'Cost can be sacrificed' is a soft preference. Cost is not a hard constraint, so it cannot appear in relaxation_order."
+      "parser_note": "'Cost can be sacrificed' is a soft preference. Cost is not a hard constraint, so it cannot appear in relaxation_order.",
+      "results-analytics-id-phase-1": "12-09-2026-run-2",
+      "results-analytics-id-phase-2": "13-09-2026-run-3",
+      "results-analytics-id-phase-3": "13-09-2026-run-4"
     },
     {
       "id": "SEC-02",
@@ -593,7 +627,8 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Still lots of matches, but the cheap/fast low-security corner is filtered out. Useful as the mid point on the security axis."
+      "thesis_insight": "Still lots of matches, but the cheap/fast low-security corner is filtered out. Useful as the mid point on the security axis.",
+      "results-analytics-id-phase-1": "12-09-2026-run-3"
     },
     {
       "id": "SEC-03",
@@ -623,7 +658,10 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "High-security slice that live can still hit (max 14.86). Pairs with LS-04, where the same 14 combined with tight latency becomes a Pareto hole."
+      "thesis_insight": "High-security slice that live can still hit (max 14.86). Pairs with LS-04, where the same 14 combined with tight latency becomes a Pareto hole.",
+      "results-analytics-id-phase-1": "12-09-2026-run-4",
+      "results-analytics-id-phase-2": "13-09-2026-run-5",
+      "results-analytics-id-phase-5": "14-09-2026-run-10"
     },
     {
       "id": "SEC-04",
@@ -653,7 +691,10 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Equals the live best_fit maximum (14.86). Two live rows, any proposer micro-step away from those weights can miss the SLA."
+      "thesis_insight": "Equals the live best_fit maximum (14.86). Two live rows, any proposer micro-step away from those weights can miss the SLA.",
+      "results-analytics-id-phase-1": "12-09-2026-run-5",
+      "results-analytics-id-phase-2": "13-09-2026-run-16",
+      "results-analytics-id-phase-5": "14-09-2026-run-11"
     },
     {
       "id": "SEC-05",
@@ -687,7 +728,9 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Historical max is 15.2 (best_fit) / 15.38 (app_rollout), so HITL offers 14.44 and 14.611. Live max 14.86 / 14.94 clears both. Higher-is-better analogue of LAT-08."
+      "thesis_insight": "Historical max is 15.2 (best_fit) / 15.38 (app_rollout), so HITL offers 14.44 and 14.611. Live max 14.86 / 14.94 clears both. Higher-is-better analogue of LAT-08.",
+      "results-analytics-id-phase-1": {"12-09-2026-run-6": "best_fit", "12-09-2026-run-7": "app_rollout"},
+      "results-analytics-id-phase-2": "13-09-2026-run-26"
     },
     {
       "id": "SEC-06",
@@ -718,7 +761,8 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Same HITL offers as SEC-05 (14.44 on best_fit, 14.611 on app_rollout) against a much more aggressive request. Tests whether the operator treats bound-based offers as honest rather than as almost 20."
+      "thesis_insight": "Same HITL offers as SEC-05 (14.44 on best_fit, 14.611 on app_rollout) against a much more aggressive request. Tests whether the operator treats bound-based offers as honest rather than as almost 20.",
+      "results-analytics-id-phase-1": "12-09-2026-run-8"
     },
     {
       "id": "SEC-07",
@@ -749,7 +793,11 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Security auto-switch: 15.3 sits between best_fit max 15.2 and app_rollout max 15.38, so Feasibility proceeds on app_rollout without HITL. Live max is only 14.86 / 14.94, so the verifier should fail. Pair with LAT-05 (auto-switch that works live) and GAP-03 (no auto-switch, same live miss)."
+      "thesis_insight": "Security auto-switch: 15.3 sits between best_fit max 15.2 and app_rollout max 15.38, so Feasibility proceeds on app_rollout without HITL. Live max is only 14.86 / 14.94, so the verifier should fail. Pair with LAT-05 (auto-switch that works live) and GAP-03 (no auto-switch, same live miss).",
+      "results-analytics-id-phase-1": "12-09-2026-run-9",
+      "results-analytics-id-phase-2": "13-09-2026-run-24",
+      "results-analytics-id-phase-4": "13-09-2026-run-5",
+      "results-analytics-id-phase-5": "14-09-2026-run-7"
     },
     {
       "id": "LC-01",
@@ -785,7 +833,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Easy two-metric box. Historical matches drop from 940 (latency-only) to 347 once cost <= 1000 is co-constrained, even though each bound is slack on its own."
+      "thesis_insight": "Easy two-metric box. Historical matches drop from 940 (latency-only) to 347 once cost <= 1000 is co-constrained, even though each bound is slack on its own.",
+      "results-analytics-id-phase-1": "12-09-2026-run-10",
+      "results-analytics-id-phase-2": "13-09-2026-run-6"
     },
     {
       "id": "LC-02",
@@ -821,7 +871,11 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Both bounds are independently easy, together only 42 historical rows and 2 live best_fit rows remain. A feasible pair that already feels scarce."
+      "thesis_insight": "Both bounds are independently easy, together only 42 historical rows and 2 live best_fit rows remain. A feasible pair that already feels scarce.",
+      "results-analytics-id-phase-1": "12-09-2026-run-11",
+      "results-analytics-id-phase-2": "13-09-2026-run-14",
+      "results-analytics-id-phase-4": "13-09-2026-run-10",
+      "results-analytics-id-phase-5": "14-09-2026-run-12"
     },
     {
       "id": "LC-03",
@@ -861,7 +915,9 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "One live best_fit row. Explicit relaxation_order is present even though HITL should not fire: useful if search later fails and Recalibrator needs a tie-break."
+      "thesis_insight": "One live best_fit row. Explicit relaxation_order is present even though HITL should not fire: useful if search later fails and Recalibrator needs a tie-break.",
+      "results-analytics-id-phase-1": "12-09-2026-run-12",
+      "results-analytics-id-phase-2": "13-09-2026-run-11"
     },
     {
       "id": "LC-04",
@@ -907,7 +963,16 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Pareto hole: 700 ms and cost 400 each exist, never together. HITL offers per-algorithm conditional relaxations: latency 962.389 (best_fit) / 931.313 (app_rollout) given cost 400, or cost 631.085 / 581.111 given latency 700."
+      "thesis_insight": "Pareto hole: 700 ms and cost 400 each exist, never together. HITL offers per-algorithm conditional relaxations: latency 962.389 (best_fit) / 931.313 (app_rollout) given cost 400, or cost 631.085 / 581.111 given latency 700.",
+      "results-analytics-id-phase-1": {
+        "12-09-2026-run-13": "best_fit with latency relaxation", 
+        "12-09-2026-run-14": "best_fit with cost relaxation with 5 iternation cap", 
+        "12-09-2026-run-15": "best_fit with cost relaxation with 10 iternation cap", 
+        "12-09-2026-run-16": "app_rollout with latency relaxation", 
+        "12-09-2026-run-17": "app_rollout with cost relaxation"
+      },
+      "results-analytics-id-phase-2": "13-09-2026-run-27",
+      "results-analytics-id-phase-6": "14-09-2026-run-8"
     },
     {
       "id": "LC-05",
@@ -953,7 +1018,8 @@
         "in_loop_authorized"
       ],
       "thesis_insight": "800 ms and cost 400 each exist, never together (the old 800/600 pair is now jointly feasible on app_rollout). Primary is cost rather than latency, so after a HITL relax the proposer ranking should flip.",
-      "parser_note": "'relax latency second' implies cost is first, both are hard constraints so both are listed."
+      "parser_note": "'relax latency second' implies cost is first, both are hard constraints so both are listed.",
+      "results-analytics-id-phase-1": {"12-09-2026-run-18": "best_fit", "12-09-2026-run-19": "app_rollout"}
     },
     {
       "id": "LS-01",
@@ -989,7 +1055,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Easy latency+security box. Opposite trade-off from LC-01: adding security >= 8 to latency <= 1000 only cuts 940 to 705, so the low-latency tail is mostly already secure enough."
+      "thesis_insight": "Easy latency+security box. Opposite trade-off from LC-01: adding security >= 8 to latency <= 1000 only cuts 940 to 705, so the low-latency tail is mostly already secure enough.",
+      "results-analytics-id-phase-1": "12-09-2026-run-20"
     },
     {
       "id": "LS-02",
@@ -1025,7 +1092,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "High security with a still-reasonable latency cap is jointly feasible (best latency given security 14 is approx. 565 ms). Contrast with LS-04 at 550 ms."
+      "thesis_insight": "High security with a still-reasonable latency cap is jointly feasible (best latency given security 14 is approx. 565 ms). Contrast with LS-04 at 550 ms.",
+      "results-analytics-id-phase-1": "12-09-2026-run-21"
     },
     {
       "id": "LS-03",
@@ -1061,7 +1129,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "550 ms is tight, security 8 is not. Jointly feasible on live (2 rows). The next step up in security (LS-04) falls off the front."
+      "thesis_insight": "550 ms is tight, security 8 is not. Jointly feasible on live (2 rows). The next step up in security (LS-04) falls off the front.",
+      "results-analytics-id-phase-1": "12-09-2026-run-22",
+      "results-analytics-id-phase-2": "13-09-2026-run-7"
     },
     {
       "id": "LS-04",
@@ -1106,7 +1176,13 @@
         "in_loop_authorized"
       ],
       "thesis_insight": "Each bound is independently easy-ish, together they never co-occur. Per-algorithm HITL offers: latency 632.670 (best_fit) / 593.514 (app_rollout) given security 14, or security 12.046 / 12.635 given latency 550.",
-      "parser_note": "Text says 'relax security first' and never names latency as relaxable, so only security is listed."
+      "parser_note": "Text says 'relax security first' and never names latency as relaxable, so only security is listed.",
+      "results-analytics-id-phase-1": {
+        "12-09-2026-run-23": "best_fit with 5 iteration cap", 
+        "12-09-2026-run-24": "best_fit with 10 iteration cap", 
+        "12-09-2026-run-25": "app_rollout" 
+      },
+      "results-analytics-id-phase-2": "13-09-2026-run-28"
     },
     {
       "id": "LS-05",
@@ -1142,7 +1218,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Interior of the latency-security front: feasible with a healthy live match count. Good control for LS-04."
+      "thesis_insight": "Interior of the latency-security front: feasible with a healthy live match count. Good control for LS-04.",
+      "results-analytics-id-phase-1": "12-09-2026-run-26"
     },
     {
       "id": "CS-01",
@@ -1178,7 +1255,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "High security is compatible with a moderate cost cap (best security given cost 500 is 12.9, but 800 still reaches 15.38). Shows the cost-security elbow."
+      "thesis_insight": "High security is compatible with a moderate cost cap (best security given cost 500 is 12.9, but 800 still reaches 15.38). Shows the cost-security elbow.",
+      "results-analytics-id-phase-1": "12-09-2026-run-27",
+      "results-analytics-id-phase-2": "13-09-2026-run-8"
     },
     {
       "id": "CS-02",
@@ -1214,7 +1293,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Cheap + modest security still co-exist. Contrast with CS-03, where security 10 at cost 380 is a hole of a few units."
+      "thesis_insight": "Cheap + modest security still co-exist. Contrast with CS-03, where security 10 at cost 380 is a hole of a few units.",
+      "results-analytics-id-phase-1": "12-09-2026-run-28",
+      "results-analytics-id-phase-5": "14-09-2026-run-13"
     },
     {
       "id": "CS-03",
@@ -1260,7 +1341,14 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Smallest Pareto gap in the catalog after tightening past the new rollout front. Per-algorithm HITL offers: cost 430.967 (best_fit) / 410.598 (app_rollout) given security 10, or security 9.158 / 9.082 given cost 380."
+      "thesis_insight": "Smallest Pareto gap in the catalog after tightening past the new rollout front. Per-algorithm HITL offers: cost 430.967 (best_fit) / 410.598 (app_rollout) given security 10, or security 9.158 / 9.082 given cost 380.",
+      "results-analytics-id-phase-1": {
+        "12-09-2026-run-29": "best_fit with cost relaxation for 5 iterations", 
+        "12-09-2026-run-30": "best_fit with cost relaxation for 10 iterations", 
+        "12-09-2026-run-31": "best_fit with security relaxation", 
+        "12-09-2026-run-32": "app_rollout with cost relaxation", 
+        "12-09-2026-run-33": "app_rollout with security relaxation"
+      }
     },
     {
       "id": "CS-04",
@@ -1301,7 +1389,8 @@
         "in_loop_authorized"
       ],
       "thesis_insight": "Cost <= 450 and security >= 12 restores a joint hole after cost<=500 and security>=12 became jointly feasible on app_rollout. Still independently feasible on each metric.",
-      "parser_note": "Text only authorizes relaxing cost."
+      "parser_note": "Text only authorizes relaxing cost.",
+      "results-analytics-id-phase-1": {"12-09-2026-run-34": "best_fit", "12-09-2026-run-35": "app_rollout"}
     },
     {
       "id": "CS-05",
@@ -1337,7 +1426,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Control for CS-03: drop security from 10 to 8 and a similar cost cap becomes jointly feasible. Isolates the Pareto edge."
+      "thesis_insight": "Control for CS-03: drop security from 10 to 8 and a similar cost cap becomes jointly feasible. Isolates the Pareto edge.",
+      "results-analytics-id-phase-1": "12-09-2026-run-36"
     },
     {
       "id": "LCS-01",
@@ -1380,7 +1470,8 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Slack three-metric box. Parser must extract three hard constraints with mixed operators. Search should still be a first-try success."
+      "thesis_insight": "Slack three-metric box. Parser must extract three hard constraints with mixed operators. Search should still be a first-try success.",
+      "results-analytics-id-phase-1": "12-09-2026-run-37"
     },
     {
       "id": "LCS-02",
@@ -1428,7 +1519,10 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Same latency/cost box as LC-01 plus security >= 8. Matches fall from 347 to 141: the third constraint is binding once cost is already in the picture. Checks that the parser extracts three mixed-operator SLAs."
+      "thesis_insight": "Same latency/cost box as LC-01 plus security >= 8. Matches fall from 347 to 141: the third constraint is binding once cost is already in the picture. Checks that the parser extracts three mixed-operator SLAs.",
+      "results-analytics-id-phase-1": "12-09-2026-run-38",
+      "results-analytics-id-phase-2": "13-09-2026-run-15",
+      "results-analytics-id-phase-5": "14-09-2026-run-14"
     },
     {
       "id": "LCS-03",
@@ -1471,7 +1565,11 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "One live best_fit row. A feasible triple sitting on the interior elbow (the single historical point near cost 788 / sec 10.3 / lat 721 is the spirit of this box)."
+      "thesis_insight": "One live best_fit row. A feasible triple sitting on the interior elbow (the single historical point near cost 788 / sec 10.3 / lat 721 is the spirit of this box).",
+      "results-analytics-id-phase-1": "12-09-2026-run-39",
+      "results-analytics-id-phase-2": "13-09-2026-run-12",
+      "results-analytics-id-phase-4": {"13-09-2026-run-1": "k=5", "13-09-2026-run-9": "k=2"},
+      "results-analytics-id-phase-6": "14-09-2026-run-9"
     },
     {
       "id": "LCS-04",
@@ -1514,7 +1612,11 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Cost-tight triple that live still meets once. Binding constraint is cost, latency 1000 is almost slack given cost 500 (cheapest secure-enough runs are slow)."
+      "thesis_insight": "Cost-tight triple that live still meets once. Binding constraint is cost, latency 1000 is almost slack given cost 500 (cheapest secure-enough runs are slow).",
+      "results-analytics-id-phase-1": "12-09-2026-run-40",
+      "results-analytics-id-phase-2": "13-09-2026-run-13",
+      "results-analytics-id-phase-4": "13-09-2026-run-11",
+      "results-analytics-id-phase-6": "14-09-2026-run-7"
     },
     {
       "id": "LCS-05",
@@ -1561,7 +1663,13 @@
         "in_loop_authorized"
       ],
       "thesis_insight": "Four historical rows, one live best_fit. Security-heavy triple with a cost cap that still just closes. Good candidate for showing requested-vs-delivered bars on all three axes.",
-      "parser_note": "Text only authorizes relaxing cost."
+      "parser_note": "Text only authorizes relaxing cost.",
+      "results-analytics-id-phase-1": {"12-09-2026-run-41": "5 iteration cap", "12-09-2026-run-42": "10 iteration cap"},
+      "results-analytics-id-phase-2": {"13-09-2026-run-18": "5 iteration cap", "13-09-2026-run-19": "10 iteration cap"},
+      "results-analytics-id-phase-3": "13-09-2026-run-5",
+      "results-analytics-id-phase-4": {"13-09-2026-run-3": "k=5", "13-09-2026-run-12": "k=1"},
+      "results-analytics-id-phase-5": "14-09-2026-run-5",
+      "results-analytics-id-phase-6": "14-09-2026-run-4"
     },
     {
       "id": "LCS-06",
@@ -1610,7 +1718,15 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Pairwise, latency 550 + cost 800 is feasible (81 rows) and latency 550 + security 8 is feasible (68), but the triple is empty. HITL must reason about a 3-way hole, not a single-metric bound."
+      "thesis_insight": "Pairwise, latency 550 + cost 800 is feasible (81 rows) and latency 550 + security 8 is feasible (68), but the triple is empty. HITL must reason about a 3-way hole, not a single-metric bound.",
+      "results-analytics-id-phase-1": {
+        "12-09-2026-run-43": "best_fit with latency relaxation",
+        "12-09-2026-run-44": "best_fit with cost relaxation",
+        "12-09-2026-run-45": "best_fit with security relaxation",
+        "12-09-2026-run-46": "app_rollout with latency relaxation",
+        "12-09-2026-run-47": "app_rollout with cost relaxation",
+        "12-09-2026-run-48": "app_rollout with security relaxation"
+      }
     },
     {
       "id": "LCS-07",
@@ -1659,7 +1775,15 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Every axis is independently beyond its bound. Independent 5% offers are per-algorithm (latency 533.537 / 509.141, cost 321.863 / 320.304, security 14.44 / 14.611) and still do not form a jointly feasible box, because cheap and fast never co-occur. Relaxing one metric at a time cannot recover a 3-way utopia."
+      "thesis_insight": "Every axis is independently beyond its bound. Independent 5% offers are per-algorithm (latency 533.537 / 509.141, cost 321.863 / 320.304, security 14.44 / 14.611) and still do not form a jointly feasible box, because cheap and fast never co-occur. Relaxing one metric at a time cannot recover a 3-way utopia.",
+      "results-analytics-id-phase-1": {
+        "12-09-2026-run-49": "best_fit with latency relaxation",
+        "12-09-2026-run-50": "best_fit with cost relaxation",
+        "12-09-2026-run-51": "best_fit with security relaxation",
+        "12-09-2026-run-52": "app_rollout with latency relaxation",
+        "12-09-2026-run-53": "app_rollout with cost relaxation",
+        "13-09-2026-run-1": "app_rollout with security relaxation"
+      }
     },
     {
       "id": "GAP-01",
@@ -1689,7 +1813,11 @@
         "live_gap",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Feasibility proceeds on best_fit (neighbor floor 508.131 ms). Live best_fit is 520.266 ms, so the verifier should fail. Live app_rollout has matching rows (491.834 ms) but auto-switch does not fire because best_fit is historically jointly feasible. Recalibrator cannot salvage it: the text never put latency in relaxation_order."
+      "thesis_insight": "Feasibility proceeds on best_fit (neighbor floor 508.131 ms). Live best_fit is 520.266 ms, so the verifier should fail. Live app_rollout has matching rows (491.834 ms) but auto-switch does not fire because best_fit is historically jointly feasible. Recalibrator cannot salvage it: the text never put latency in relaxation_order.",
+      "results-analytics-id-phase-1": "13-09-2026-run-2",
+      "results-analytics-id-phase-2": "13-09-2026-run-20",
+      "results-analytics-id-phase-4": {"13-09-2026-run-4":"k=5", "13-09-2026-run-7": "k=2", "13-09-2026-run-13": "k=1"},
+      "results-analytics-id-phase-5": "14-09-2026-run-4"
     },
     {
       "id": "GAP-02",
@@ -1719,7 +1847,9 @@
         "live_gap",
         "hitl_relaxable"
       ],
-      "thesis_insight": "History has 15 runs at cost <= 320 (best 305.052). Live best is 328.9. No HITL pause, and Recalibrator cannot loosen cost because the text never authorized relaxation_order. Likely max-iteration failure."
+      "thesis_insight": "History has 15 runs at cost <= 320 (best 305.052). Live best is 328.9. No HITL pause, and Recalibrator cannot loosen cost because the text never authorized relaxation_order. Likely max-iteration failure.",
+      "results-analytics-id-phase-1": "13-09-2026-run-3",
+      "results-analytics-id-phase-2": "13-09-2026-run-21"
     },
     {
       "id": "GAP-03",
@@ -1750,7 +1880,8 @@
         "higher_is_better",
         "hitl_relaxable"
       ],
-      "thesis_insight": "179 historical rows reach 15.0, live max is 14.86. The pre-check will not ask the operator, which is exactly the retrieval-mismatch story."
+      "thesis_insight": "179 historical rows reach 15.0, live max is 14.86. The pre-check will not ask the operator, which is exactly the retrieval-mismatch story.",
+      "results-analytics-id-phase-1": "13-09-2026-run-4"
     },
     {
       "id": "GAP-04",
@@ -1787,7 +1918,10 @@
         "live_gap",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Pairwise analogue of GAP-01: 28 historical co-occurrences, zero on live best_fit. LS-03 (security 8 at the same latency) is live-feasible, this one is not."
+      "thesis_insight": "Pairwise analogue of GAP-01: 28 historical co-occurrences, zero on live best_fit. LS-03 (security 8 at the same latency) is live-feasible, this one is not.",
+      "results-analytics-id-phase-1": "13-09-2026-run-5",
+      "results-analytics-id-phase-2": "13-09-2026-run-22",
+      "results-analytics-id-phase-4": {"13-09-2026-run-6": "k=2", "13-09-2026-run-14": "k=1"}
     },
     {
       "id": "GAP-05",
@@ -1831,7 +1965,10 @@
         "live_gap",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Three historical rows make the pre-check green. Live has no such compromise point. Strongest triple-metric retrieval-mismatch case."
+      "thesis_insight": "Three historical rows make the pre-check green. Live has no such compromise point. Strongest triple-metric retrieval-mismatch case.",
+      "results-analytics-id-phase-1": "13-09-2026-run-6",
+      "results-analytics-id-phase-4": "13-09-2026-run-16",
+      "results-analytics-id-phase-6": "14-09-2026-run-11"
     },
     {
       "id": "POL-01",
@@ -1866,7 +2003,9 @@
         "policy",
         "non_relaxable"
       ],
-      "thesis_insight": "Same 470 ms SLA as the HITL demos, but 'never' should hide the Relax button. Continue-anyway cannot loosen the threshold, loop should die on max iterations. 500 ms now auto-switches (see LAT-05), so HITL policy demos moved below 484.9 ms."
+      "thesis_insight": "Same 470 ms SLA as the HITL demos, but 'never' should hide the Relax button. Continue-anyway cannot loosen the threshold, loop should die on max iterations. 500 ms now auto-switches (see LAT-05), so HITL policy demos moved below 484.9 ms.",
+      "results-analytics-id-phase-1": "13-09-2026-run-7",
+      "results-analytics-id-phase-2": "13-09-2026-run-29"
     },
     {
       "id": "POL-02",
@@ -1909,7 +2048,10 @@
         "policy",
         "dual_non_relaxable"
       ],
-      "thesis_insight": "Same numeric pair as LS-04, both non-relaxable. No Relax option. Continue dies at max iterations. New intent is the only way out. Domain wrapping plus dual 'never'."
+      "thesis_insight": "Same numeric pair as LS-04, both non-relaxable. No Relax option. Continue dies at max iterations. New intent is the only way out. Domain wrapping plus dual 'never'.",
+      "results-analytics-id-phase-1": "13-09-2026-run-8",
+      "results-analytics-id-phase-2": "13-09-2026-run-30",
+      "results-analytics-id-phase-3": "13-09-2026-run-3"
     },
     {
       "id": "POL-03",
@@ -1946,7 +2088,9 @@
         "hitl_relaxable",
         "in_loop_authorized"
       ],
-      "thesis_insight": "Choose Continue at HITL. After three distinct failed weights Recalibrator may loosen 470 toward the empirical best. Needs max_iterations 7\u20138. Complements POL-01 (no Relax) and LAT-05 (500 ms auto-switch, no pause)."
+      "thesis_insight": "Choose Continue at HITL. After three distinct failed weights Recalibrator may loosen 470 toward the empirical best. Needs max_iterations 7-8. Complements POL-01 (no Relax) and LAT-05 (500 ms auto-switch, no pause).",
+      "results-analytics-id-phase-1": {"13-09-2026-run-9": "5 iteration cap", "13-09-2026-run-10": "10 iteration cap"},
+      "results-analytics-id-phase-2": "13-09-2026-run-33"
     },
     {
       "id": "POL-04",
@@ -1983,7 +2127,9 @@
         "conflicting_policy"
       ],
       "thesis_insight": "Parser stress: 'never' vs 'you may relax' in one sentence. Code should keep latency non-relaxable if 'never' wins, which is the conservative safety reading. 470 ms still HITL, 500 ms would auto-switch.",
-      "parser_note": "Conflicting cues: 'never' -> non_relaxable, 'you may relax' -> relaxation_order. Recalibrator still blocks because non_relaxable wins."
+      "results-analytics-id-phase-1": "13-09-2026-run-11",
+      "results-analytics-id-phase-2": "13-09-2026-run-31",
+      "results-analytics-id-phase-3": "13-09-2026-run-1"
     },
     {
       "id": "POL-05",
@@ -2017,7 +2163,9 @@
         "policy",
         "non_relaxable"
       ],
-      "thesis_insight": "COST-05 plus non-relaxable. HITL would offer 321.863 / 320.304, but Relax is hidden, and live cannot meet 300 anyway. Hard infeasibility with no legal escape except a new intent."
+      "thesis_insight": "COST-05 plus non-relaxable. HITL would offer 321.863 / 320.304, but Relax is hidden, and live cannot meet 300 anyway. Hard infeasibility with no legal escape except a new intent.",
+      "results-analytics-id-phase-1": "13-09-2026-run-12",
+      "results-analytics-id-phase-2": "13-09-2026-run-32"
     },
     {
       "id": "PREF-01",
@@ -2042,7 +2190,9 @@
         "soft_only",
         "parse_ok"
       ],
-      "thesis_insight": "No hard SLA, so Feasibility always proceeds. Proposer ranks the full history by latency. Mentions all three metrics but only latency is the objective: tests soft_preferences vs empty hard_constraints."
+      "thesis_insight": "No hard SLA, so Feasibility always proceeds. Proposer ranks the full history by latency. Mentions all three metrics but only latency is the objective: tests soft_preferences vs empty hard_constraints.",
+      "results-analytics-id-phase-1": "13-09-2026-run-13",
+      "results-analytics-id-phase-5": "14-09-2026-run-6"
     },
     {
       "id": "PREF-02",
@@ -2074,7 +2224,9 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Primary objective is not the constrained metric. Warm-start filters on latency then ranks by cost. Checks that the agent does not treat 'minimize cost' as a hidden cost <= ? SLA."
+      "thesis_insight": "Primary objective is not the constrained metric. Warm-start filters on latency then ranks by cost. Checks that the agent does not treat 'minimize cost' as a hidden cost <= ? SLA.",
+      "results-analytics-id-phase-1": "13-09-2026-run-14",
+      "results-analytics-id-phase-2": "13-09-2026-run-10"
     },
     {
       "id": "PREF-03",
@@ -2098,7 +2250,8 @@
         "parse_ok",
         "higher_is_better"
       ],
-      "thesis_insight": "Unconstrained higher-is-better ranking. Historical best security is 15.38 (app_rollout) / 15.2 (best_fit). The run should walk toward that corner rather than a balanced interior point."
+      "thesis_insight": "Unconstrained higher-is-better ranking. Historical best security is 15.38 (app_rollout) / 15.2 (best_fit). The run should walk toward that corner rather than a balanced interior point.",
+      "results-analytics-id-phase-1": "13-09-2026-run-15"
     },
     {
       "id": "PREF-04",
@@ -2121,7 +2274,8 @@
         "soft_only",
         "parse_ok"
       ],
-      "thesis_insight": "Unconstrained cost ranking. Completes the PREF trio with PREF-01 (latency) and PREF-03 (security). Feasibility always proceeds. Proposer ranks the full history by lowest avg_cost. Secondary mentions must not become hidden hard SLAs."
+      "thesis_insight": "Unconstrained cost ranking. Completes the PREF trio with PREF-01 (latency) and PREF-03 (security). Feasibility always proceeds. Proposer ranks the full history by lowest avg_cost. Secondary mentions must not become hidden hard SLAs.",
+      "results-analytics-id-phase-1": "13-09-2026-run-16"
     },
     {
       "id": "PAR-01",
@@ -2158,7 +2312,7 @@
         "parser_unresolved",
         "synonym"
       ],
-      "thesis_insight": "Operator jargon (response time / price / isolation) never mentions latency, cost, or security by name. Same guard as PAR-01, more realistic wording. Measures whether the rewrite UX is necessary in IBN language."
+      "thesis_insight": "Operator (response time / price / isolation) never mentions latency, cost, or security by name. Same guard as PAR-01, more realistic wording. Measures whether the rewrite UX is necessary in IBN language."
     },
     {
       "id": "PAR-03",
@@ -2207,7 +2361,10 @@
         "parse_ok",
         "hitl_relaxable"
       ],
-      "thesis_insight": "Linguistic trap: security is higher-is-better, but the operator said 'under 8'. If the parser faithfully emits <= 8, the SLA is easy and semantically inverted. A finding about inverse-translator fidelity, not placement quality."
+      "thesis_insight": "Linguistic trap: security is higher-is-better, but the operator said 'under 8'. If the parser faithfully emits <= 8, the SLA is easy and semantically inverted. A finding about inverse-translator fidelity, not placement quality.",
+      "results-analytics-id-phase-1": "13-09-2026-run-17",
+      "results-analytics-id-phase-2": "13-09-2026-run-9",
+      "results-analytics-id-phase-3": "13-09-2026-run-2"
     },
     {
       "id": "PAR-05",

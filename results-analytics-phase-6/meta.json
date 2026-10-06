@@ -1,0 +1,15 @@
+{
+    "phase": 6,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0,
+    "warm_start_mode": "near_neighbor",
+    "warm_start_k": "None",
+    "historical_seeds": "200-209",
+    "warm_start_pool": [200,201,202,203,204,205,206,207,208,209],
+    "live_seed": "210",
+    "dataset_file": "valid_runs.csv",
+    "dataset_rows": 462,
+    "weight_grid_size": 21,
+    "id in catalog": "results-analytics-phase-6",
+    "note": "Run dataset grid subsampling at step 0.2 with claude haiku-4-5"
+}

@@ -1,0 +1,150 @@
+{
+    "user_intent": "Average cost must not exceed 400. Optimize for cost. Latency and security can wait.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 400.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are lower priority"
+        ],
+        "non_relaxable_constraints": [
+            "cost"
+        ],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 400.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are lower priority"
+        ],
+        "non_relaxable_constraints": [
+            "cost"
+        ],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-14T11:53:04.331484",
+    "execution_time_seconds": 19.84,
+    "success": true,
+    "max_iterations": 10,
+    "iterations_done": 3,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.453,
+            "w2": 0.273,
+            "w3": 0.274,
+            "avg_cost": 972.56,
+            "avg_security": 13.78,
+            "avg_latency": 750.728,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 972.560 cost units (avg per app), but required <= 400.0."
+        },
+        {
+            "attempt": 2,
+            "w1": 0.668,
+            "w2": 0.166,
+            "w3": 0.166,
+            "avg_cost": 438.172,
+            "avg_security": 11.02,
+            "avg_latency": 1052.946,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 438.172 cost units (avg per app), but required <= 400.0."
+        },
+        {
+            "attempt": 3,
+            "w1": 0.768,
+            "w2": 0.116,
+            "w3": 0.116,
+            "avg_cost": 392.338,
+            "avg_security": 9.74,
+            "avg_latency": 1031.294,
+            "norm_cost": 3.323,
+            "norm_sec": 25.308,
+            "norm_lat": 30.068,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "cost": 400.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": null,
+        "seeds": [],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "no_historical_evidence": true,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 8300,
+        "output_tokens": 1731,
+        "total_tokens": 10031
+    },
+    "final_weights": {
+        "w1": 0.768,
+        "w2": 0.116,
+        "w3": 0.116
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 19616.913,
+        "total_security": 487.0,
+        "total_latency": 51564.676,
+        "avg_cost": 392.338,
+        "avg_security": 9.74,
+        "avg_latency": 1031.294,
+        "norm_cost": 3.323,
+        "norm_sec": 25.308,
+        "norm_lat": 30.068,
+        "total_score": 8.904
+    },
+    "seed": 210,
+    "warm_start_seeds": [],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "cold_start": true,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

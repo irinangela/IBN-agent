@@ -1,0 +1,164 @@
+{
+    "user_intent": "Average latency under 1000 ms, average cost under 500, average security at least 8. Cost is the primary objective.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "latency",
+                "operator": "<=",
+                "threshold": 1000.0
+            },
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 500.0
+            },
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 8.0
+            }
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "latency",
+                "operator": "<=",
+                "threshold": 1000.0
+            },
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 500.0
+            },
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 8.0
+            }
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-13T23:26:33.103019",
+    "execution_time_seconds": 303.39,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 2,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.8,
+            "w2": 0.1,
+            "w3": 0.1,
+            "avg_cost": 390.4,
+            "avg_security": 9.8,
+            "avg_latency": 1025.173,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated latency: Achieved 1025.173 ms (avg per app), but required <= 1000.0."
+        },
+        {
+            "attempt": 2,
+            "w1": 0.7,
+            "w2": 0.1,
+            "w3": 0.2,
+            "avg_cost": 401.877,
+            "avg_security": 10.02,
+            "avg_latency": 999.991,
+            "norm_cost": 3.509,
+            "norm_sec": 26.516,
+            "norm_lat": 28.958,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "latency": 1000.0,
+                "cost": 500.0,
+                "security": 8.0
+            }
+        }
+    ],
+    "algorithm": "app_rollout",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": "app_rollout",
+        "chosen_algorithm": "app_rollout",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.02,
+                    "latency": 515.6242602907819
+                },
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.16,
+                    "latency": 494.66114871251705
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 6094,
+        "output_tokens": 1275,
+        "total_tokens": 7369
+    },
+    "final_weights": {
+        "w1": 0.7,
+        "w2": 0.1,
+        "w3": 0.2
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 20093.835,
+        "total_security": 501.0,
+        "total_latency": 49999.534,
+        "avg_cost": 401.877,
+        "avg_security": 10.02,
+        "avg_latency": 999.991,
+        "norm_cost": 3.509,
+        "norm_sec": 26.516,
+        "norm_lat": 28.958,
+        "total_score": 10.597
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

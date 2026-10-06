@@ -1,0 +1,154 @@
+{
+    "user_intent": "Minimize average cost. Keep cost at or below 1000. Latency and security are secondary.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 1000.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-11T20:57:36.459065",
+    "execution_time_seconds": 6.71,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.92,
+            "w2": 0.0,
+            "w3": 0.08,
+            "avg_cost": 328.628,
+            "avg_security": 4.46,
+            "avg_latency": 917.979,
+            "norm_cost": 2.061,
+            "norm_sec": 3.929,
+            "norm_lat": 26.046,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "cost": 1000.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3753,
+        "output_tokens": 493,
+        "total_tokens": 4246
+    },
+    "final_weights": {
+        "w1": 0.92,
+        "w2": 0.0,
+        "w3": 0.08
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16431.413,
+        "total_security": 223.0,
+        "total_latency": 45898.956,
+        "avg_cost": 328.628,
+        "avg_security": 4.46,
+        "avg_latency": 917.979,
+        "norm_cost": 2.061,
+        "norm_sec": 3.929,
+        "norm_lat": 26.046,
+        "total_score": 3.98
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

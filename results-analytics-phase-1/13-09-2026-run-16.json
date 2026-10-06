@@ -1,0 +1,140 @@
+{
+    "user_intent": "Minimize average cost. Latency and security are secondary",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-13T00:28:25.953290",
+    "execution_time_seconds": 5.7,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.85,
+            "w2": 0.0,
+            "w3": 0.15,
+            "avg_cost": 329.428,
+            "avg_security": 4.48,
+            "avg_latency": 930.394,
+            "norm_cost": 2.077,
+            "norm_sec": 4.002,
+            "norm_lat": 26.486,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {}
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3785,
+        "output_tokens": 434,
+        "total_tokens": 4219
+    },
+    "final_weights": {
+        "w1": 0.85,
+        "w2": 0.0,
+        "w3": 0.15
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16471.391,
+        "total_security": 224.0,
+        "total_latency": 46519.682,
+        "avg_cost": 329.428,
+        "avg_security": 4.48,
+        "avg_latency": 930.394,
+        "norm_cost": 2.077,
+        "norm_sec": 4.002,
+        "norm_lat": 26.486,
+        "total_score": 5.738
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

@@ -1,0 +1,164 @@
+{
+    "user_intent": "Average cost must not exceed 400. Optimize for cost. Latency and security can wait.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 400.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are lower priority"
+        ],
+        "non_relaxable_constraints": [
+            "cost"
+        ],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 400.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are lower priority"
+        ],
+        "non_relaxable_constraints": [
+            "cost"
+        ],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-14T14:38:29.671047",
+    "execution_time_seconds": 6.3,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 1.0,
+            "w2": 0.0,
+            "w3": 0.0,
+            "avg_cost": 329.908,
+            "avg_security": 7.16,
+            "avg_latency": 1159.002,
+            "norm_cost": 2.087,
+            "norm_sec": 15.002,
+            "norm_lat": 34.489,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "cost": 400.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "warm_start_grid_step": 0.2,
+        "warm_start_grid_points": 21,
+        "needs_operator": false,
+        "no_historical_evidence": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 307.9093548458432,
+                    "security": 15.16,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3756,
+        "output_tokens": 484,
+        "total_tokens": 4240
+    },
+    "final_weights": {
+        "w1": 1.0,
+        "w2": 0.0,
+        "w3": 0.0
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16495.411,
+        "total_security": 358.0,
+        "total_latency": 57950.08,
+        "avg_cost": 329.908,
+        "avg_security": 7.16,
+        "avg_latency": 1159.002,
+        "norm_cost": 2.087,
+        "norm_sec": 15.002,
+        "norm_lat": 34.489,
+        "total_score": 2.087
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "warm_start_grid_step": 0.2,
+    "warm_start_grid_points": 21,
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "cold_start": false,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

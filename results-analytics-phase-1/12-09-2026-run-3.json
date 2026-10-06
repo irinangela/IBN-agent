@@ -1,0 +1,150 @@
+{
+    "user_intent": "Average security score must be at least 12. Maximize security under that floor.",
+    "initial_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 12.0
+            }
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 12.0
+            }
+        ],
+        "soft_preferences": [],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-12T19:18:27.308218",
+    "execution_time_seconds": 5.53,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.35,
+            "w2": 0.55,
+            "w3": 0.1,
+            "avg_cost": 606.285,
+            "avg_security": 14.82,
+            "avg_latency": 1040.399,
+            "norm_cost": 7.549,
+            "norm_sec": 45.434,
+            "norm_lat": 30.392,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "security": 12.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3806,
+        "output_tokens": 423,
+        "total_tokens": 4229
+    },
+    "final_weights": {
+        "w1": 0.35,
+        "w2": 0.55,
+        "w3": 0.1
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 30314.234,
+        "total_security": 741.0,
+        "total_latency": 52019.932,
+        "avg_cost": 606.285,
+        "avg_security": 14.82,
+        "avg_latency": 1040.399,
+        "norm_cost": 7.549,
+        "norm_sec": 45.434,
+        "norm_lat": 30.392,
+        "total_score": 8.193
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

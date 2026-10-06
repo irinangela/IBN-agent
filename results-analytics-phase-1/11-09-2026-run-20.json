@@ -1,0 +1,196 @@
+{
+    "user_intent": "Keep average cost at or below 306. Minimize cost. Latency and security are secondary.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 306.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 306.0
+            }
+        ],
+        "soft_preferences": [
+            "latency and security are secondary priorities"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-11T23:18:06.617992",
+    "execution_time_seconds": 689.63,
+    "success": false,
+    "max_iterations": 5,
+    "iterations_done": 5,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 1.0,
+            "w2": 0.0,
+            "w3": 0.0,
+            "avg_cost": 327.566,
+            "avg_security": 4.46,
+            "avg_latency": 1189.013,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 327.566 cost units (avg per app), but required <= 306.0."
+        },
+        {
+            "attempt": 2,
+            "w1": 0.85,
+            "w2": 0.1,
+            "w3": 0.05,
+            "avg_cost": 397.477,
+            "avg_security": 10.0,
+            "avg_latency": 1032.223,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 397.477 cost units (avg per app), but required <= 306.0."
+        },
+        {
+            "attempt": 3,
+            "w1": 0.98,
+            "w2": 0.01,
+            "w3": 0.01,
+            "avg_cost": 330.088,
+            "avg_security": 7.38,
+            "avg_latency": 1037.038,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 330.088 cost units (avg per app), but required <= 306.0."
+        },
+        {
+            "attempt": 4,
+            "w1": 0.99,
+            "w2": 0.005,
+            "w3": 0.005,
+            "avg_cost": 330.149,
+            "avg_security": 7.46,
+            "avg_latency": 1080.891,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 330.149 cost units (avg per app), but required <= 306.0."
+        },
+        {
+            "attempt": 5,
+            "w1": 0.985,
+            "w2": 0.008,
+            "w3": 0.008,
+            "avg_cost": 330.08,
+            "avg_security": 7.36,
+            "avg_latency": 1049.174,
+            "norm_cost": 2.09,
+            "norm_sec": 15.873,
+            "norm_lat": 30.703,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated cost: Achieved 330.080 cost units (avg per app), but required <= 306.0.",
+            "active_thresholds": {
+                "cost": 306.0
+            }
+        }
+    ],
+    "algorithm": "app_rollout",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": "app_rollout",
+        "chosen_algorithm": "app_rollout",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": false,
+                "infeasible_metrics": [
+                    "cost"
+                ]
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 14170,
+        "output_tokens": 4417,
+        "total_tokens": 18587
+    },
+    "final_weights": {
+        "w1": 0.985,
+        "w2": 0.008,
+        "w3": 0.008
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16504.002,
+        "total_security": 368.0,
+        "total_latency": 52458.708,
+        "avg_cost": 330.08,
+        "avg_security": 7.36,
+        "avg_latency": 1049.174,
+        "norm_cost": 2.09,
+        "norm_sec": 15.873,
+        "norm_lat": 30.703,
+        "total_score": 2.577
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

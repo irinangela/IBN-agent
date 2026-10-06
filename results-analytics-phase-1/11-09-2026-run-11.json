@@ -1,0 +1,154 @@
+{
+    "user_intent": "The budget cap is 700 cost units per app on average. Prefer cheaper placements whenever the cap is met.",
+    "initial_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 700.0
+            }
+        ],
+        "soft_preferences": [
+            "prefer cheaper placements whenever the cap is met"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "cost",
+        "hard_constraints": [
+            {
+                "metric": "cost",
+                "operator": "<=",
+                "threshold": 700.0
+            }
+        ],
+        "soft_preferences": [
+            "prefer cheaper placements whenever the cap is met"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-11T20:58:11.077855",
+    "execution_time_seconds": 6.1,
+    "success": true,
+    "max_iterations": 5,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.9,
+            "w2": 0.0,
+            "w3": 0.1,
+            "avg_cost": 328.892,
+            "avg_security": 4.46,
+            "avg_latency": 917.21,
+            "norm_cost": 2.067,
+            "norm_sec": 3.929,
+            "norm_lat": 26.018,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {
+                "cost": 700.0
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": 200,
+        "seeds": [
+            200,
+            201,
+            202,
+            203,
+            204,
+            205,
+            206,
+            207,
+            208,
+            209
+        ],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {
+                    "cost": 306.53583820697133,
+                    "security": 15.2,
+                    "latency": 508.13054278420844
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {
+                    "cost": 305.051785488483,
+                    "security": 15.38,
+                    "latency": 484.895938222566
+                },
+                "jointly_feasible": true,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3757,
+        "output_tokens": 537,
+        "total_tokens": 4294
+    },
+    "final_weights": {
+        "w1": 0.9,
+        "w2": 0.0,
+        "w3": 0.1
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 16444.595,
+        "total_security": 223.0,
+        "total_latency": 45860.499,
+        "avg_cost": 328.892,
+        "avg_security": 4.46,
+        "avg_latency": 917.21,
+        "norm_cost": 2.067,
+        "norm_sec": 3.929,
+        "norm_lat": 26.018,
+        "total_score": 4.462
+    },
+    "seed": 210,
+    "warm_start_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

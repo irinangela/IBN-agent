@@ -1,0 +1,15 @@
+{
+    "phase": 5,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0,
+    "warm_start_mode": "near_neighbor",
+    "warm_start_k": 0,
+    "historical_seeds": "200-209",
+    "warm_start_pool": "none",
+    "live_seed": "210",
+    "dataset_file": "valid_runs.csv",
+    "dataset_rows": 1452,
+    "weight_grid_size": 66,
+    "id in catalog": "results-analytics-phase-5",
+    "note": "Run cold start with claude haiku-4-5"
+}

@@ -1,0 +1,220 @@
+{
+    "user_intent": "Average security must be at least 15.3. Maximize security. Latency and cost are secondary.",
+    "initial_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 15.3
+            }
+        ],
+        "soft_preferences": [
+            "latency and cost are secondary priorities"
+        ],
+        "non_relaxable_constraints": [
+            "security"
+        ],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "security",
+        "hard_constraints": [
+            {
+                "metric": "security",
+                "operator": ">=",
+                "threshold": 15.3
+            }
+        ],
+        "soft_preferences": [
+            "latency and cost are secondary priorities"
+        ],
+        "non_relaxable_constraints": [
+            "security"
+        ],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-14T11:52:17.141526",
+    "execution_time_seconds": 82.62,
+    "success": false,
+    "max_iterations": 10,
+    "iterations_done": 10,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.283,
+            "w2": 0.433,
+            "w3": 0.284,
+            "avg_cost": 1048.287,
+            "avg_security": 14.5,
+            "avg_latency": 721.41,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.500 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 2,
+            "w1": 0.25,
+            "w2": 0.5,
+            "w3": 0.25,
+            "avg_cost": 1064.717,
+            "avg_security": 14.68,
+            "avg_latency": 750.198,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.680 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 3,
+            "w1": 0.2,
+            "w2": 0.56,
+            "w3": 0.24,
+            "avg_cost": 1064.914,
+            "avg_security": 14.68,
+            "avg_latency": 776.892,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.680 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 4,
+            "w1": 0.15,
+            "w2": 0.7,
+            "w3": 0.15,
+            "avg_cost": 1064.717,
+            "avg_security": 14.68,
+            "avg_latency": 750.198,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.680 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 5,
+            "w1": 0.262,
+            "w2": 0.514,
+            "w3": 0.224,
+            "avg_cost": 1046.32,
+            "avg_security": 14.7,
+            "avg_latency": 783.268,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.700 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 6,
+            "w1": 0.342,
+            "w2": 0.394,
+            "w3": 0.264,
+            "avg_cost": 1038.292,
+            "avg_security": 14.62,
+            "avg_latency": 743.093,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.620 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 7,
+            "w1": 0.28,
+            "w2": 0.52,
+            "w3": 0.2,
+            "avg_cost": 1041.898,
+            "avg_security": 14.72,
+            "avg_latency": 755.416,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.720 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 8,
+            "w1": 0.2,
+            "w2": 0.62,
+            "w3": 0.18,
+            "avg_cost": 1046.32,
+            "avg_security": 14.7,
+            "avg_latency": 783.268,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.700 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 9,
+            "w1": 0.25,
+            "w2": 0.57,
+            "w3": 0.18,
+            "avg_cost": 1041.898,
+            "avg_security": 14.72,
+            "avg_latency": 755.416,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.720 security score (avg per app, higher is better), but required >= 15.3."
+        },
+        {
+            "attempt": 10,
+            "w1": 0.33,
+            "w2": 0.62,
+            "w3": 0.05,
+            "avg_cost": 606.312,
+            "avg_security": 14.78,
+            "avg_latency": 1034.959,
+            "norm_cost": 7.55,
+            "norm_sec": 45.252,
+            "norm_lat": 30.199,
+            "feedback": "FAILED CONSTRAINTS:\n- Violated security: Achieved 14.780 security score (avg per app, higher is better), but required >= 15.3.",
+            "active_thresholds": {
+                "security": 15.3
+            }
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": null,
+        "seeds": [],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "no_historical_evidence": true,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 27474,
+        "output_tokens": 8017,
+        "total_tokens": 35491
+    },
+    "final_weights": {
+        "w1": 0.33,
+        "w2": 0.62,
+        "w3": 0.05
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 30315.619,
+        "total_security": 739.0,
+        "total_latency": 51747.973,
+        "avg_cost": 606.312,
+        "avg_security": 14.78,
+        "avg_latency": 1034.959,
+        "norm_cost": 7.55,
+        "norm_sec": 45.252,
+        "norm_lat": 30.199,
+        "total_score": 6.945
+    },
+    "seed": 210,
+    "warm_start_seeds": [],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "cold_start": true,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}

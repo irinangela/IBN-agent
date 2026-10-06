@@ -1,0 +1,114 @@
+{
+    "user_intent": "Optimize for low latency. Keep cost reasonably low and security reasonably high",
+    "initial_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [],
+        "soft_preferences": [
+            "keep cost reasonably low",
+            "keep security reasonably high"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "active_intent": {
+        "primary_objective": "latency",
+        "hard_constraints": [],
+        "soft_preferences": [
+            "keep cost reasonably low",
+            "keep security reasonably high"
+        ],
+        "non_relaxable_constraints": [],
+        "relaxation_order": []
+    },
+    "timestamp": "2026-09-14T11:50:36.751216",
+    "execution_time_seconds": 5.77,
+    "success": true,
+    "max_iterations": 10,
+    "iterations_done": 1,
+    "constraints_dropped": 0,
+    "relaxations": [],
+    "relaxation_events": [],
+    "attempts": [
+        {
+            "attempt": 1,
+            "w1": 0.283,
+            "w2": 0.283,
+            "w3": 0.434,
+            "avg_cost": 1119.127,
+            "avg_security": 13.38,
+            "avg_latency": 651.495,
+            "norm_cost": 17.682,
+            "norm_sec": 39.798,
+            "norm_lat": 16.584,
+            "feedback": "SUCCESS: All active hard constraints and placement requirements were strictly satisfied.",
+            "active_thresholds": {}
+        }
+    ],
+    "algorithm": "best_fit",
+    "feasibility_report": {
+        "seed": null,
+        "seeds": [],
+        "live_seed": 210,
+        "warm_start_mode": "near_neighbor",
+        "needs_operator": false,
+        "no_historical_evidence": true,
+        "auto_switched_to": null,
+        "chosen_algorithm": "best_fit",
+        "per_algorithm": {
+            "best_fit": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            },
+            "app_rollout": {
+                "bounds": {},
+                "jointly_feasible": false,
+                "infeasible_metrics": []
+            }
+        },
+        "suggested_relaxations": []
+    },
+    "operator_decision": {},
+    "token_usage": {
+        "input_tokens": 3676,
+        "output_tokens": 424,
+        "total_tokens": 4100
+    },
+    "final_weights": {
+        "w1": 0.283,
+        "w2": 0.283,
+        "w3": 0.434
+    },
+    "final_metrics": {
+        "failures": 0,
+        "successful_apps": 50,
+        "total_cost": 55956.34,
+        "total_security": 669.0,
+        "total_latency": 32574.737,
+        "avg_cost": 1119.127,
+        "avg_security": 13.38,
+        "avg_latency": 651.495,
+        "norm_cost": 17.682,
+        "norm_sec": 39.798,
+        "norm_lat": 16.584,
+        "total_score": 15.089
+    },
+    "seed": 210,
+    "warm_start_seeds": [],
+    "warm_start_mode": "near_neighbor",
+    "historical_seeds": [
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+    ],
+    "cold_start": true,
+    "model": "claude-haiku-4-5-20251001",
+    "temperature": 0
+}
